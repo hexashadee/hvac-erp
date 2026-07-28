@@ -1,8 +1,10 @@
+using HvacERP.Domain.Common.ValueObjects;
+
 namespace HvacERP.Domain.Authorization;
 
-public sealed class RolePermission : IEquatable<RolePermission>
+public sealed class RolePermission : ValueObject
 {
-    public Guid PermissionId { get; private set; }
+    public Guid PermissionId { get; }
 
     private RolePermission(Guid permissionId)
     {
@@ -21,44 +23,8 @@ public sealed class RolePermission : IEquatable<RolePermission>
         return new RolePermission(permissionId);
     }
 
-    public bool Equals(RolePermission? other)
+    protected override IEnumerable<object?> GetEqualityComponents()
     {
-        if (other is null)
-        {
-            return false;
-        }
-
-        if (ReferenceEquals(this, other))
-        {
-            return true;
-        }
-
-        return PermissionId == other.PermissionId;
-    }
-
-    public override bool Equals(object? obj)
-    {
-        return obj is RolePermission other &&
-               Equals(other);
-    }
-
-    public override int GetHashCode()
-    {
-        return PermissionId.GetHashCode();
-    }
-
-    public static bool operator ==(
-        RolePermission? left,
-        RolePermission? right)
-    {
-        return Equals(left, right);
-    }
-
-    public static bool operator !=(
-        RolePermission? left,
-        RolePermission? right)
-    {
-        return !Equals(left, right);
+        yield return PermissionId;
     }
 }
-

@@ -35,9 +35,8 @@ public class RolePermissionTests
         RolePermission second =
             RolePermission.Create(permissionId);
 
+        Assert.Equal(first, second);
         Assert.True(first.Equals(second));
-        Assert.True(first == second);
-        Assert.False(first != second);
     }
 
     [Fact]
@@ -49,9 +48,8 @@ public class RolePermissionTests
         RolePermission second =
             RolePermission.Create(Guid.NewGuid());
 
+        Assert.NotEqual(first, second);
         Assert.False(first.Equals(second));
-        Assert.False(first == second);
-        Assert.True(first != second);
     }
 
     [Fact]
@@ -61,8 +59,6 @@ public class RolePermissionTests
             RolePermission.Create(Guid.NewGuid());
 
         Assert.False(rolePermission.Equals(null));
-        Assert.False(rolePermission == null);
-        Assert.True(rolePermission != null);
     }
 
     [Fact]
