@@ -2,22 +2,30 @@ using HvacERP.Domain.Users;
 
 namespace HvacERP.Domain.Tests.Users;
 
-public sealed class UserTests
+public class UserTests
 {
     [Fact]
-    public void Create_WithValidValues_CreatesUser()
+    public void Create_ShouldCreateUser()
     {
-        User user = User.Create(
-            Guid.NewGuid(),
-            "cognito-123",
-            "test@example.com",
-            "Taylor",
-            "Shelp",
-            DateTimeOffset.UtcNow,
-            Guid.NewGuid());
+        // Arrange
+        Guid id = Guid.NewGuid();
+        Guid createdBy = Guid.NewGuid();
+        DateTimeOffset createdAt = DateTimeOffset.UtcNow;
 
-        Assert.Equal("cognito-123", user.ExternalIdentityId);
-        Assert.Equal("test@example.com", user.Email);
+        // Act
+        User user = User.Create(
+            id,
+            "auth0|12345",
+            "TEST@Example.COM",
+            " Taylor ",
+            " Shelp ",
+            createdAt,
+            createdBy);
+
+        // Assert
+        Assert.Equal(id, user.Id);
+        Assert.Equal("auth0|12345", user.ExternalIdentityId);
+        Assert.Equal("test@example.com", user.Email.Value);
         Assert.Equal("Taylor", user.FirstName);
         Assert.Equal("Shelp", user.LastName);
         Assert.Equal("Taylor Shelp", user.DisplayName);
@@ -25,41 +33,65 @@ public sealed class UserTests
     }
 
     [Fact]
-    public void Create_TrimsAndNormalizesValues()
+    public void UpdateEmail_ShouldNormalizeEmail()
     {
+        // Arrange
         User user = User.Create(
             Guid.NewGuid(),
-            "  cognito-123  ",
-            "  TEST@Example.COM  ",
-            "  Taylor  ",
-            "  Shelp  ",
+            "auth0|12345",
+            "old@example.com",
+            "Taylor",
+            "Shelp",
             DateTimeOffset.UtcNow,
             Guid.NewGuid());
 
-        Assert.Equal("cognito-123", user.ExternalIdentityId);
-        Assert.Equal("test@example.com", user.Email);
-        Assert.Equal("Taylor", user.FirstName);
-        Assert.Equal("Shelp", user.LastName);
+        // Act
+        user.UpdateEmail(
+            " NEW@Example.COM ",
+            DateTimeOffset.UtcNow,
+            Guid.NewGuid());
+
+        // Assert
+        Assert.Equal("new@example.com", user.Email.Value);
     }
 
     [Fact]
-    public void Create_WithInvalidEmail_ThrowsArgumentException()
+    public void UpdateName_ShouldUpdateDisplayName()
     {
-        Assert.Throws<ArgumentException>(() =>
-            User.Create(
-                Guid.NewGuid(),
-                "cognito-123",
-                "not-an-email",
-                "Taylor",
-                "Shelp",
-                DateTimeOffset.UtcNow,
-                Guid.NewGuid()));
+        // Arrange
+        User user = User.Create(
+            Guid.NewGuid(),
+            "auth0|12345",
+            "test@example.com",
+            "Taylor",
+            "Shelp",
+            DateTimeOffset.UtcNow,
+            Guid.NewGuid());
+
+        // Act
+        user.UpdateName(
+            "John",
+            "Doe",
+            DateTimeOffset.UtcNow,
+            Guid.NewGuid());
+
+        // Assert
+        Assert.Equal("John", user.FirstName);
+        Assert.Equal("Doe", user.LastName);
+        Assert.Equal("John Doe", user.DisplayName);
     }
 
     [Fact]
-    public void Disable_MarksUserInactive()
+    public void Disable_ShouldSetUserInactive()
     {
-        User user = CreateUser();
+        User user = User.Create(
+            Guid.NewGuid(),
+            "auth0|12345",
+            "test@example.com",
+            "Taylor",
+            "Shelp",
+            DateTimeOffset.UtcNow,
+            Guid.NewGuid());
 
         user.Disable(
             DateTimeOffset.UtcNow,
@@ -69,9 +101,16 @@ public sealed class UserTests
     }
 
     [Fact]
-    public void Enable_MarksUserActive()
+    public void Enable_ShouldSetUserActive()
     {
-        User user = CreateUser();
+        User user = User.Create(
+            Guid.NewGuid(),
+            "auth0|12345",
+            "test@example.com",
+            "Taylor",
+            "Shelp",
+            DateTimeOffset.UtcNow,
+            Guid.NewGuid());
 
         user.Disable(
             DateTimeOffset.UtcNow,
@@ -84,15 +123,17 @@ public sealed class UserTests
         Assert.True(user.IsActive);
     }
 
-    private static User CreateUser()
+    [Fact]
+    public void Create_ShouldThrow_WhenEmailIsInvalid()
     {
-        return User.Create(
-            Guid.NewGuid(),
-            "cognito-123",
-            "test@example.com",
-            "Taylor",
-            "Shelp",
-            DateTimeOffset.UtcNow,
-            Guid.NewGuid());
+        Assert.Throws<ArgumentException>(() =>
+            User.Create(
+                Guid.NewGuid(),
+                "auth0|12345",
+                "not-an-email",
+                "Taylor",
+                "Shelp",
+                DateTimeOffset.UtcNow,
+                Guid.NewGuid()));
     }
 }

@@ -1,4 +1,5 @@
 using HvacERP.Domain.Common.Base;
+using HvacERP.Domain.Common.ValueObjects;
 
 namespace HvacERP.Domain.Users;
 
@@ -6,7 +7,7 @@ public sealed class User : AggregateRoot
 {
     public string ExternalIdentityId { get; private set; }
 
-    public string Email { get; private set; }
+    public Email Email { get; private set; }
 
     public string FirstName { get; private set; }
 
@@ -19,7 +20,7 @@ public sealed class User : AggregateRoot
     private User(
         Guid id,
         string externalIdentityId,
-        string email,
+        Email email,
         string firstName,
         string lastName,
         DateTimeOffset createdAtUtc,
@@ -45,24 +46,22 @@ public sealed class User : AggregateRoot
         string normalizedExternalIdentityId =
             externalIdentityId.Trim();
 
-        string normalizedEmail =
-            email.Trim().ToLowerInvariant();
-
         string normalizedFirstName =
             firstName.Trim();
 
         string normalizedLastName =
             lastName.Trim();
 
+        Email emailAddress = Email.Create(email);
+
         ValidateExternalIdentityId(normalizedExternalIdentityId);
-        ValidateEmail(normalizedEmail);
         ValidateName(normalizedFirstName, nameof(firstName));
         ValidateName(normalizedLastName, nameof(lastName));
 
         return new User(
             id,
             normalizedExternalIdentityId,
-            normalizedEmail,
+            emailAddress,
             normalizedFirstName,
             normalizedLastName,
             createdAtUtc,
@@ -92,14 +91,11 @@ public sealed class User : AggregateRoot
         DateTimeOffset modifiedAtUtc,
         Guid modifiedByUserId)
     {
-        string normalizedEmail =
-            email.Trim().ToLowerInvariant();
+        Email = Email.Create(email);
 
-        ValidateEmail(normalizedEmail);
-
-        Email = normalizedEmail;
-
-        MarkModified(modifiedAtUtc, modifiedByUserId);
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
     }
 
     public void Disable(
@@ -135,30 +131,6 @@ public sealed class User : AggregateRoot
             throw new ArgumentException(
                 "External identity ID cannot exceed 200 characters.",
                 nameof(externalIdentityId));
-        }
-    }
-
-    private static void ValidateEmail(string email)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            throw new ArgumentException(
-                "Email is required.",
-                nameof(email));
-        }
-
-        if (email.Length > 320)
-        {
-            throw new ArgumentException(
-                "Email cannot exceed 320 characters.",
-                nameof(email));
-        }
-
-        if (!email.Contains('@'))
-        {
-            throw new ArgumentException(
-                "Email must be valid.",
-                nameof(email));
         }
     }
 
