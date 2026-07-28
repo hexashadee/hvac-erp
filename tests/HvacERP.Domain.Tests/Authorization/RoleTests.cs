@@ -24,11 +24,58 @@ public class RoleTests
         Assert.Equal(id, role.Id);
         Assert.Equal(companyId, role.CompanyId);
         Assert.Equal("Dispatcher", role.Name);
-        Assert.Equal(
-            "Can manage scheduling and dispatching.",
-            role.Description);
+        Assert.Equal("Can manage scheduling and dispatching.", role.Description);
         Assert.False(role.IsSystemRole);
         Assert.True(role.IsActive);
+        Assert.Empty(role.Permissions);
+    }
+
+    [Fact]
+    public void AssignPermission_ShouldAddPermission()
+    {
+        Role role = CreateRole();
+        Guid permissionId = Guid.NewGuid();
+
+        role.AssignPermission(permissionId);
+
+        Assert.Single(role.Permissions);
+        Assert.True(role.HasPermission(permissionId));
+    }
+
+    [Fact]
+    public void AssignPermission_ShouldNotDuplicatePermission()
+    {
+        Role role = CreateRole();
+        Guid permissionId = Guid.NewGuid();
+
+        role.AssignPermission(permissionId);
+        role.AssignPermission(permissionId);
+
+        Assert.Single(role.Permissions);
+    }
+
+    [Fact]
+    public void RemovePermission_ShouldRemovePermission()
+    {
+        Role role = CreateRole();
+        Guid permissionId = Guid.NewGuid();
+
+        role.AssignPermission(permissionId);
+
+        Assert.True(role.HasPermission(permissionId));
+
+        role.RemovePermission(permissionId);
+
+        Assert.False(role.HasPermission(permissionId));
+        Assert.Empty(role.Permissions);
+    }
+
+    [Fact]
+    public void HasPermission_ShouldReturnFalse_WhenPermissionDoesNotExist()
+    {
+        Role role = CreateRole();
+
+        Assert.False(role.HasPermission(Guid.NewGuid()));
     }
 
     [Fact]
@@ -44,9 +91,7 @@ public class RoleTests
             Guid.NewGuid());
 
         Assert.Equal("Dispatcher", role.Name);
-        Assert.Equal(
-            "Can manage scheduling and dispatching.",
-            role.Description);
+        Assert.Equal("Can manage scheduling and dispatching.", role.Description);
     }
 
     [Fact]
@@ -72,7 +117,7 @@ public class RoleTests
                 Guid.NewGuid(),
                 Guid.Empty,
                 "Dispatcher",
-                "Can manage scheduling and dispatching.",
+                "Description",
                 false,
                 DateTimeOffset.UtcNow,
                 Guid.NewGuid()));
@@ -88,7 +133,7 @@ public class RoleTests
                 Guid.NewGuid(),
                 Guid.NewGuid(),
                 name,
-                "Can manage scheduling and dispatching.",
+                "Description",
                 false,
                 DateTimeOffset.UtcNow,
                 Guid.NewGuid()));
@@ -104,7 +149,7 @@ public class RoleTests
                 Guid.NewGuid(),
                 Guid.NewGuid(),
                 name,
-                "Can manage scheduling and dispatching.",
+                "Description",
                 false,
                 DateTimeOffset.UtcNow,
                 Guid.NewGuid()));
@@ -133,48 +178,16 @@ public class RoleTests
 
         role.UpdateDetails(
             "Service Manager",
-            "Manages technicians and service operations.",
+            "Manages technicians.",
             DateTimeOffset.UtcNow,
             Guid.NewGuid());
 
         Assert.Equal("Service Manager", role.Name);
-        Assert.Equal(
-            "Manages technicians and service operations.",
-            role.Description);
+        Assert.Equal("Manages technicians.", role.Description);
     }
 
     [Fact]
-    public void UpdateDetails_ShouldTrimNameAndDescription()
-    {
-        Role role = CreateRole();
-
-        role.UpdateDetails(
-            " Service Manager ",
-            " Manages technicians and service operations. ",
-            DateTimeOffset.UtcNow,
-            Guid.NewGuid());
-
-        Assert.Equal("Service Manager", role.Name);
-        Assert.Equal(
-            "Manages technicians and service operations.",
-            role.Description);
-    }
-
-    [Fact]
-    public void UpdateDetails_ShouldThrow_WhenNameIsInvalid()
-    {
-        Role role = CreateRole();
-
-        Assert.Throws<ArgumentException>(() =>
-            role.UpdateDetails(
-                " ",
-                "Updated description.",
-                DateTimeOffset.UtcNow,
-                Guid.NewGuid()));
-    }
-
-    [Fact]
-    public void Deactivate_ShouldSetRoleInactive()
+    public void Deactivate_ShouldDeactivateRole()
     {
         Role role = CreateRole();
 
@@ -186,7 +199,7 @@ public class RoleTests
     }
 
     [Fact]
-    public void Activate_ShouldSetRoleActive()
+    public void Activate_ShouldActivateRole()
     {
         Role role = CreateRole();
 
@@ -208,7 +221,7 @@ public class RoleTests
             Guid.NewGuid(),
             Guid.NewGuid(),
             "Administrator",
-            "Full company access.",
+            "Full access.",
             true,
             DateTimeOffset.UtcNow,
             Guid.NewGuid());

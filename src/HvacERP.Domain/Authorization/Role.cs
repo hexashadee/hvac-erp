@@ -4,6 +4,8 @@ namespace HvacERP.Domain.Authorization;
 
 public sealed class Role : AggregateRoot
 {
+    private readonly HashSet<RolePermission> _permissions = [];
+
     public Guid CompanyId { get; private set; }
 
     public string Name { get; private set; }
@@ -13,6 +15,9 @@ public sealed class Role : AggregateRoot
     public bool IsSystemRole { get; private set; }
 
     public bool IsActive { get; private set; }
+
+    public IReadOnlyCollection<RolePermission> Permissions =>
+        _permissions;
 
     private Role(
         Guid id,
@@ -43,8 +48,7 @@ public sealed class Role : AggregateRoot
         ValidateCompanyId(companyId);
 
         string normalizedName = NormalizeRequiredValue(name);
-        string normalizedDescription =
-            description?.Trim() ?? string.Empty;
+        string normalizedDescription = description?.Trim() ?? string.Empty;
 
         ValidateName(normalizedName);
         ValidateDescription(normalizedDescription);
@@ -59,6 +63,24 @@ public sealed class Role : AggregateRoot
             createdByUserId);
     }
 
+    public void AssignPermission(Guid permissionId)
+    {
+        _permissions.Add(
+            RolePermission.Create(permissionId));
+    }
+
+    public void RemovePermission(Guid permissionId)
+    {
+        _permissions.Remove(
+            RolePermission.Create(permissionId));
+    }
+
+    public bool HasPermission(Guid permissionId)
+    {
+        return _permissions.Contains(
+            RolePermission.Create(permissionId));
+    }
+
     public void UpdateDetails(
         string name,
         string description,
@@ -66,8 +88,7 @@ public sealed class Role : AggregateRoot
         Guid modifiedByUserId)
     {
         string normalizedName = NormalizeRequiredValue(name);
-        string normalizedDescription =
-            description?.Trim() ?? string.Empty;
+        string normalizedDescription = description?.Trim() ?? string.Empty;
 
         ValidateName(normalizedName);
         ValidateDescription(normalizedDescription);
@@ -75,9 +96,7 @@ public sealed class Role : AggregateRoot
         Name = normalizedName;
         Description = normalizedDescription;
 
-        MarkModified(
-            modifiedAtUtc,
-            modifiedByUserId);
+        MarkModified(modifiedAtUtc, modifiedByUserId);
     }
 
     public void Activate(
@@ -85,15 +104,10 @@ public sealed class Role : AggregateRoot
         Guid modifiedByUserId)
     {
         if (IsActive)
-        {
             return;
-        }
 
         IsActive = true;
-
-        MarkModified(
-            modifiedAtUtc,
-            modifiedByUserId);
+        MarkModified(modifiedAtUtc, modifiedByUserId);
     }
 
     public void Deactivate(
@@ -101,21 +115,15 @@ public sealed class Role : AggregateRoot
         Guid modifiedByUserId)
     {
         if (!IsActive)
-        {
             return;
-        }
 
         IsActive = false;
-
-        MarkModified(
-            modifiedAtUtc,
-            modifiedByUserId);
+        MarkModified(modifiedAtUtc, modifiedByUserId);
     }
 
     private static string NormalizeRequiredValue(string value)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value);
-
         return value.Trim();
     }
 
