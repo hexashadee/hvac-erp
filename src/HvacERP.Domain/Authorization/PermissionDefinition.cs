@@ -6,11 +6,13 @@ public sealed class PermissionDefinition : AggregateRoot
 {
     public string Key { get; private set; }
 
+    public string Module => Key.Split('.')[0];
+
+    public string Action => Key.Split('.')[1];
+
     public string DisplayName { get; private set; }
 
     public string Description { get; private set; }
-
-    public string Module { get; private set; }
 
     public bool RequiresStepUpAuthentication { get; private set; }
 
@@ -25,7 +27,6 @@ public sealed class PermissionDefinition : AggregateRoot
         string key,
         string displayName,
         string description,
-        string module,
         bool requiresStepUpAuthentication,
         bool requiresReason,
         bool auditAccess,
@@ -36,7 +37,6 @@ public sealed class PermissionDefinition : AggregateRoot
         Key = key;
         DisplayName = displayName;
         Description = description;
-        Module = module;
         RequiresStepUpAuthentication = requiresStepUpAuthentication;
         RequiresReason = requiresReason;
         AuditAccess = auditAccess;
@@ -48,7 +48,6 @@ public sealed class PermissionDefinition : AggregateRoot
         string key,
         string displayName,
         string description,
-        string module,
         bool requiresStepUpAuthentication,
         bool requiresReason,
         bool auditAccess,
@@ -56,28 +55,23 @@ public sealed class PermissionDefinition : AggregateRoot
         Guid createdByUserId)
     {
         string normalizedKey = NormalizeRequiredValue(key);
-        string normalizedDisplayName = NormalizeRequiredValue(displayName);
-        string normalizedDescription = description?.Trim() ?? string.Empty;
-        string normalizedModule = NormalizeRequiredValue(module);
+        string normalizedDisplayName =
+            NormalizeRequiredValue(displayName);
+        string normalizedDescription =
+            description?.Trim() ?? string.Empty;
 
         ValidateKey(normalizedKey);
         ValidateDisplayName(normalizedDisplayName);
         ValidateDescription(normalizedDescription);
-        ValidateModule(normalizedModule);
-
-        if (requiresReason && !auditAccess)
-        {
-            throw new ArgumentException(
-                "A permission that requires a reason must also be audited.",
-                nameof(auditAccess));
-        }
+        ValidateSecurityRequirements(
+            requiresReason,
+            auditAccess);
 
         return new PermissionDefinition(
             id,
             normalizedKey,
             normalizedDisplayName,
             normalizedDescription,
-            normalizedModule,
             requiresStepUpAuthentication,
             requiresReason,
             auditAccess,
@@ -91,8 +85,10 @@ public sealed class PermissionDefinition : AggregateRoot
         DateTimeOffset modifiedAtUtc,
         Guid modifiedByUserId)
     {
-        string normalizedDisplayName = NormalizeRequiredValue(displayName);
-        string normalizedDescription = description?.Trim() ?? string.Empty;
+        string normalizedDisplayName =
+            NormalizeRequiredValue(displayName);
+        string normalizedDescription =
+            description?.Trim() ?? string.Empty;
 
         ValidateDisplayName(normalizedDisplayName);
         ValidateDescription(normalizedDescription);
@@ -100,7 +96,9 @@ public sealed class PermissionDefinition : AggregateRoot
         DisplayName = normalizedDisplayName;
         Description = normalizedDescription;
 
-        MarkModified(modifiedAtUtc, modifiedByUserId);
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
     }
 
     public void ConfigureSecurityRequirements(
@@ -110,18 +108,18 @@ public sealed class PermissionDefinition : AggregateRoot
         DateTimeOffset modifiedAtUtc,
         Guid modifiedByUserId)
     {
-        if (requiresReason && !auditAccess)
-        {
-            throw new ArgumentException(
-                "A permission that requires a reason must also be audited.",
-                nameof(auditAccess));
-        }
+        ValidateSecurityRequirements(
+            requiresReason,
+            auditAccess);
 
-        RequiresStepUpAuthentication = requiresStepUpAuthentication;
+        RequiresStepUpAuthentication =
+            requiresStepUpAuthentication;
         RequiresReason = requiresReason;
         AuditAccess = auditAccess;
 
-        MarkModified(modifiedAtUtc, modifiedByUserId);
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
     }
 
     public void Activate(
@@ -135,7 +133,9 @@ public sealed class PermissionDefinition : AggregateRoot
 
         IsActive = true;
 
-        MarkModified(modifiedAtUtc, modifiedByUserId);
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
     }
 
     public void Deactivate(
@@ -149,7 +149,9 @@ public sealed class PermissionDefinition : AggregateRoot
 
         IsActive = false;
 
-        MarkModified(modifiedAtUtc, modifiedByUserId);
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
     }
 
     private static string NormalizeRequiredValue(string value)
@@ -170,7 +172,7 @@ public sealed class PermissionDefinition : AggregateRoot
 
         string[] segments = key.Split('.');
 
-        if (segments.Length < 2 ||
+        if (segments.Length != 2 ||
             segments.Any(segment =>
                 string.IsNullOrWhiteSpace(segment) ||
                 !segment.All(character =>
@@ -183,7 +185,8 @@ public sealed class PermissionDefinition : AggregateRoot
         }
     }
 
-    private static void ValidateDisplayName(string displayName)
+    private static void ValidateDisplayName(
+        string displayName)
     {
         if (displayName.Length > 150)
         {
@@ -193,7 +196,8 @@ public sealed class PermissionDefinition : AggregateRoot
         }
     }
 
-    private static void ValidateDescription(string description)
+    private static void ValidateDescription(
+        string description)
     {
         if (description.Length > 500)
         {
@@ -203,13 +207,15 @@ public sealed class PermissionDefinition : AggregateRoot
         }
     }
 
-    private static void ValidateModule(string module)
+    private static void ValidateSecurityRequirements(
+        bool requiresReason,
+        bool auditAccess)
     {
-        if (module.Length > 100)
+        if (requiresReason && !auditAccess)
         {
             throw new ArgumentException(
-                "Permission module cannot exceed 100 characters.",
-                nameof(module));
+                "A permission that requires a reason must also be audited.",
+                nameof(auditAccess));
         }
     }
 }
