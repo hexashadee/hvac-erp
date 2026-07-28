@@ -1,29 +1,44 @@
 namespace HvacERP.Domain.Common.Base;
 
-public abstract class AuditableEntity : AggregateRoot
+public abstract class AuditableEntity : Entity
 {
-    public DateTime CreatedAtUtc { get; protected set; }
+    public DateTimeOffset CreatedAtUtc { get; private set; }
 
-    public Guid CreatedByUserId { get; protected set; }
+    public Guid CreatedByUserId { get; private set; }
 
-    public DateTime? LastModifiedAtUtc { get; protected set; }
+    public DateTimeOffset? LastModifiedAtUtc { get; private set; }
 
-    public Guid? LastModifiedByUserId { get; protected set; }
+    public Guid? LastModifiedByUserId { get; private set; }
 
-    protected AuditableEntity(Guid id)
+    protected AuditableEntity(
+        Guid id,
+        DateTimeOffset createdAtUtc,
+        Guid createdByUserId)
         : base(id)
     {
-        CreatedAtUtc = DateTime.UtcNow;
+        ValidateUserId(createdByUserId);
+
+        CreatedAtUtc = createdAtUtc.ToUniversalTime();
+        CreatedByUserId = createdByUserId;
     }
 
-    public void SetCreatedBy(Guid userId)
+    public void MarkModified(
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
     {
-        CreatedByUserId = userId;
+        ValidateUserId(modifiedByUserId);
+
+        LastModifiedAtUtc = modifiedAtUtc.ToUniversalTime();
+        LastModifiedByUserId = modifiedByUserId;
     }
 
-    public void SetLastModified(Guid userId)
+    private static void ValidateUserId(Guid userId)
     {
-        LastModifiedByUserId = userId;
-        LastModifiedAtUtc = DateTime.UtcNow;
+        if (userId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "User ID cannot be empty.",
+                nameof(userId));
+        }
     }
 }
