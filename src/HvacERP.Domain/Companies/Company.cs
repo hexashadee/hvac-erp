@@ -30,13 +30,16 @@ public sealed class Company : AggregateRoot
         DateTimeOffset createdAtUtc,
         Guid createdByUserId)
     {
-        ValidateName(name);
-        ValidateSlug(slug);
+        string normalizedName = name.Trim();
+        string normalizedSlug = slug.Trim().ToLowerInvariant();
+
+        ValidateName(normalizedName);
+        ValidateSlug(normalizedSlug);
 
         return new Company(
             id,
-            name.Trim(),
-            slug.Trim().ToLowerInvariant(),
+            normalizedName,
+            normalizedSlug,
             createdAtUtc,
             createdByUserId);
     }
