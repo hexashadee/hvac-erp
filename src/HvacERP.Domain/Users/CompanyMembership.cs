@@ -4,6 +4,8 @@ namespace HvacERP.Domain.Users;
 
 public sealed class CompanyMembership : AggregateRoot
 {
+    private readonly List<Guid> _roleIds = [];
+
     public Guid CompanyId { get; private set; }
 
     public Guid UserId { get; private set; }
@@ -19,6 +21,9 @@ public sealed class CompanyMembership : AggregateRoot
     public DateOnly? HireDate { get; private set; }
 
     public DateOnly? TerminationDate { get; private set; }
+
+    public IReadOnlyCollection<Guid> RoleIds =>
+        _roleIds.AsReadOnly();
 
     public bool IsActive =>
         EmploymentStatus != EmploymentStatus.Terminated;
@@ -97,6 +102,8 @@ public sealed class CompanyMembership : AggregateRoot
         DateTimeOffset modifiedAtUtc,
         Guid modifiedByUserId)
     {
+        EnsureNotTerminated();
+
         string? normalizedEmployeeNumber =
             NormalizeOptionalValue(employeeNumber);
 
@@ -188,6 +195,64 @@ public sealed class CompanyMembership : AggregateRoot
         MarkModified(modifiedAtUtc, modifiedByUserId);
     }
 
+    public void AssignRole(
+        Guid roleId,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        EnsureNotTerminated();
+
+        if (roleId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "Role ID cannot be empty.",
+                nameof(roleId));
+        }
+
+        if (_roleIds.Contains(roleId))
+        {
+            return;
+        }
+
+        _roleIds.Add(roleId);
+
+        MarkModified(modifiedAtUtc, modifiedByUserId);
+    }
+
+    public void RemoveRole(
+        Guid roleId,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        EnsureNotTerminated();
+
+        if (roleId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "Role ID cannot be empty.",
+                nameof(roleId));
+        }
+
+        bool removed = _roleIds.Remove(roleId);
+
+        if (!removed)
+        {
+            return;
+        }
+
+        MarkModified(modifiedAtUtc, modifiedByUserId);
+    }
+
+    public bool HasRole(Guid roleId)
+    {
+        if (roleId == Guid.Empty)
+        {
+            return false;
+        }
+
+        return _roleIds.Contains(roleId);
+    }
+
     private void EnsureNotTerminated()
     {
         if (EmploymentStatus == EmploymentStatus.Terminated)
@@ -226,3 +291,4 @@ public sealed class CompanyMembership : AggregateRoot
         }
     }
 }
+
