@@ -5,4 +5,7 @@
     <Project Path="src/HvacERP.Domain/HvacERP.Domain.csproj" />
     <Project Path="src/HvacERP.Infrastructure/HvacERP.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/HvacERP.Domain.Tests/HvacERP.Domain.Tests.csproj" />
+  </Folder>
 </Solution>
