@@ -1,3 +1,5 @@
+using HvacERP.Application.Dispatch.Queries.GetSchedules;
+using HvacERP.Infrastructure.Dispatch.Queries;
 using HvacERP.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +33,10 @@ public static class DependencyInjection
                             maxRetryCount: 5);
                     });
             });
+
+        services.AddScoped<
+            IDispatchScheduleQueries,
+            DispatchScheduleQueries>();
 
         return services;
     }

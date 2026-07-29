@@ -1,3 +1,4 @@
+using HvacERP.Application.Dispatch.Queries.GetSchedules;
 using HvacERP.Infrastructure;
 using HvacERP.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -103,6 +104,22 @@ app.MapGet(
         })
     .WithName("CheckDatabaseConnection")
     .WithTags("System");
+
+
+app.MapGet(
+        "/api/dispatch/schedules",
+        async (
+            IDispatchScheduleQueries queries,
+            CancellationToken cancellationToken) =>
+        {
+            IReadOnlyList<DispatchScheduleDto> schedules =
+                await queries.GetSchedulesAsync(
+                    cancellationToken);
+
+            return Results.Ok(schedules);
+        })
+    .WithName("GetDispatchSchedules")
+    .WithTags("Dispatch");
 
 app.Run();
 
