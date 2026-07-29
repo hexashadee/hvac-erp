@@ -4,6 +4,25 @@ namespace HvacERP.Domain.WorkOrders;
 
 public sealed class WorkOrder : AggregateRoot
 {
+    private readonly List<WorkOrderLineItem> _lineItems = [];
+
+    public IReadOnlyCollection<WorkOrderLineItem> LineItems =>
+        _lineItems.AsReadOnly();
+
+    public decimal LineItemSubtotal =>
+        decimal.Round(
+            _lineItems.Sum(lineItem => lineItem.LineTotal),
+            2,
+            MidpointRounding.AwayFromZero);
+
+    public decimal TaxableLineItemSubtotal =>
+        decimal.Round(
+            _lineItems
+                .Where(lineItem => lineItem.IsTaxable)
+                .Sum(lineItem => lineItem.LineTotal),
+            2,
+            MidpointRounding.AwayFromZero);
+
     public Guid CompanyId { get; private set; }
 
     public Guid CustomerId { get; private set; }
@@ -156,6 +175,151 @@ public sealed class WorkOrder : AggregateRoot
             requestedForUtc,
             createdAtUtc,
             createdByUserId);
+    }
+
+    public WorkOrderLineItem AddLineItem(
+        Guid lineItemId,
+        WorkOrderLineItemType type,
+        string? itemNumber,
+        string description,
+        decimal quantity,
+        decimal unitPrice,
+        bool isTaxable,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        EnsureNotClosed();
+
+        ValidateId(
+            lineItemId,
+            nameof(lineItemId),
+            "Line item ID");
+
+        if (_lineItems.Any(
+                lineItem =>
+                    lineItem.Id == lineItemId))
+        {
+            throw new InvalidOperationException(
+                "A work order line item with the same ID already exists.");
+        }
+
+        ValidateLineItemType(type);
+
+        string? normalizedItemNumber =
+            NormalizeOptionalValue(itemNumber);
+
+        string normalizedDescription =
+            NormalizeRequiredValue(description);
+
+        ValidateOptionalLength(
+            normalizedItemNumber,
+            100,
+            nameof(itemNumber),
+            "Item number");
+
+        ValidateRequiredLength(
+            normalizedDescription,
+            500,
+            nameof(description),
+            "Line item description");
+
+        ValidateLineItemQuantity(
+            quantity);
+
+        ValidateLineItemUnitPrice(
+            type,
+            unitPrice);
+
+        WorkOrderLineItem lineItem =
+            new(
+                lineItemId,
+                type,
+                normalizedItemNumber,
+                normalizedDescription,
+                quantity,
+                unitPrice,
+                isTaxable);
+
+        _lineItems.Add(lineItem);
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+
+        return lineItem;
+    }
+
+    public void UpdateLineItem(
+        Guid lineItemId,
+        WorkOrderLineItemType type,
+        string? itemNumber,
+        string description,
+        decimal quantity,
+        decimal unitPrice,
+        bool isTaxable,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        EnsureNotClosed();
+
+        WorkOrderLineItem lineItem =
+            GetLineItem(lineItemId);
+
+        ValidateLineItemType(type);
+
+        string? normalizedItemNumber =
+            NormalizeOptionalValue(itemNumber);
+
+        string normalizedDescription =
+            NormalizeRequiredValue(description);
+
+        ValidateOptionalLength(
+            normalizedItemNumber,
+            100,
+            nameof(itemNumber),
+            "Item number");
+
+        ValidateRequiredLength(
+            normalizedDescription,
+            500,
+            nameof(description),
+            "Line item description");
+
+        ValidateLineItemQuantity(
+            quantity);
+
+        ValidateLineItemUnitPrice(
+            type,
+            unitPrice);
+
+        lineItem.Update(
+            type,
+            normalizedItemNumber,
+            normalizedDescription,
+            quantity,
+            unitPrice,
+            isTaxable);
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+    }
+
+    public void RemoveLineItem(
+        Guid lineItemId,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        EnsureNotClosed();
+
+        WorkOrderLineItem lineItem =
+            GetLineItem(lineItemId);
+
+        _lineItems.Remove(lineItem);
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
     }
 
     public void UpdateDetails(
@@ -463,6 +627,92 @@ public sealed class WorkOrder : AggregateRoot
         MarkModified(
             cancelledAtUtc,
             modifiedByUserId);
+    }
+
+    private WorkOrderLineItem GetLineItem(
+        Guid lineItemId)
+    {
+        ValidateId(
+            lineItemId,
+            nameof(lineItemId),
+            "Line item ID");
+
+        WorkOrderLineItem? lineItem =
+            _lineItems.SingleOrDefault(
+                existingLineItem =>
+                    existingLineItem.Id == lineItemId);
+
+        if (lineItem is null)
+        {
+            throw new InvalidOperationException(
+                "The work order line item does not exist.");
+        }
+
+        return lineItem;
+    }
+
+    private static void ValidateLineItemType(
+        WorkOrderLineItemType type)
+    {
+        if (!Enum.IsDefined(type))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(type),
+                type,
+                "Work order line item type is invalid.");
+        }
+    }
+
+    private static void ValidateLineItemQuantity(
+        decimal quantity)
+    {
+        if (quantity <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(quantity),
+                quantity,
+                "Line item quantity must be greater than zero.");
+        }
+
+        if (quantity > 1_000_000)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(quantity),
+                quantity,
+                "Line item quantity cannot exceed 1,000,000.");
+        }
+    }
+
+    private static void ValidateLineItemUnitPrice(
+        WorkOrderLineItemType type,
+        decimal unitPrice)
+    {
+        if (type == WorkOrderLineItemType.Discount)
+        {
+            if (unitPrice >= 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(unitPrice),
+                    unitPrice,
+                    "A discount line item must have a negative unit price.");
+            }
+        }
+        else if (unitPrice < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(unitPrice),
+                unitPrice,
+                "Only discount line items may have a negative unit price.");
+        }
+
+        if (unitPrice < -1_000_000 ||
+            unitPrice > 1_000_000)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(unitPrice),
+                unitPrice,
+                "Line item unit price must be between -1,000,000 and 1,000,000.");
+        }
     }
 
     private void EnsureNotClosed()
