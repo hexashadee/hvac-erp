@@ -1,5 +1,4 @@
-using EquipmentAggregate =
-    HvacERP.Domain.Equipment.Equipment;
+using EquipmentAggregate = HvacERP.Domain.Equipment.Equipment;
 
 using HvacERP.Domain.Equipment;
 
