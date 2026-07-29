@@ -6,6 +6,8 @@ public sealed class WorkOrder : AggregateRoot
 {
     private readonly List<WorkOrderLineItem> _lineItems = [];
 
+    private readonly List<WorkOrderLaborEntry> _laborEntries = [];
+
     public IReadOnlyCollection<WorkOrderLineItem> LineItems =>
         _lineItems.AsReadOnly();
 
@@ -20,6 +22,45 @@ public sealed class WorkOrder : AggregateRoot
             _lineItems
                 .Where(lineItem => lineItem.IsTaxable)
                 .Sum(lineItem => lineItem.LineTotal),
+            2,
+            MidpointRounding.AwayFromZero);
+
+    public IReadOnlyCollection<WorkOrderLaborEntry> LaborEntries =>
+        _laborEntries.AsReadOnly();
+
+    public decimal TotalLaborHours =>
+        decimal.Round(
+            _laborEntries.Sum(
+                laborEntry => laborEntry.DurationHours),
+            2,
+            MidpointRounding.AwayFromZero);
+
+    public decimal BillableLaborHours =>
+        decimal.Round(
+            _laborEntries
+                .Where(laborEntry => laborEntry.IsBillable)
+                .Sum(laborEntry => laborEntry.DurationHours),
+            2,
+            MidpointRounding.AwayFromZero);
+
+    public decimal NonBillableLaborHours =>
+        decimal.Round(
+            _laborEntries
+                .Where(laborEntry => !laborEntry.IsBillable)
+                .Sum(laborEntry => laborEntry.DurationHours),
+            2,
+            MidpointRounding.AwayFromZero);
+
+    public decimal LaborSubtotal =>
+        decimal.Round(
+            _laborEntries.Sum(
+                laborEntry => laborEntry.BillableAmount),
+            2,
+            MidpointRounding.AwayFromZero);
+
+    public decimal WorkOrderSubtotal =>
+        decimal.Round(
+            LineItemSubtotal + LaborSubtotal,
             2,
             MidpointRounding.AwayFromZero);
 
@@ -316,6 +357,147 @@ public sealed class WorkOrder : AggregateRoot
             GetLineItem(lineItemId);
 
         _lineItems.Remove(lineItem);
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+    }
+
+    public WorkOrderLaborEntry AddLaborEntry(
+        Guid laborEntryId,
+        Guid technicianUserId,
+        WorkOrderLaborType type,
+        DateTimeOffset startedAtUtc,
+        DateTimeOffset endedAtUtc,
+        bool isBillable,
+        decimal hourlyRate,
+        string? notes,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        EnsureNotClosed();
+
+        ValidateId(
+            laborEntryId,
+            nameof(laborEntryId),
+            "Labor entry ID");
+
+        if (_laborEntries.Any(
+                laborEntry =>
+                    laborEntry.Id == laborEntryId))
+        {
+            throw new InvalidOperationException(
+                "A work order labor entry with the same ID already exists.");
+        }
+
+        ValidateId(
+            technicianUserId,
+            nameof(technicianUserId),
+            "Technician user ID");
+
+        ValidateLaborType(type);
+
+        ValidateLaborTimeRange(
+            startedAtUtc,
+            endedAtUtc);
+
+        ValidateHourlyRate(
+            hourlyRate);
+
+        string? normalizedNotes =
+            NormalizeOptionalValue(notes);
+
+        ValidateOptionalLength(
+            normalizedNotes,
+            2000,
+            nameof(notes),
+            "Labor notes");
+
+        WorkOrderLaborEntry laborEntry =
+            new(
+                laborEntryId,
+                technicianUserId,
+                type,
+                startedAtUtc,
+                endedAtUtc,
+                isBillable,
+                hourlyRate,
+                normalizedNotes);
+
+        _laborEntries.Add(laborEntry);
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+
+        return laborEntry;
+    }
+
+    public void UpdateLaborEntry(
+        Guid laborEntryId,
+        Guid technicianUserId,
+        WorkOrderLaborType type,
+        DateTimeOffset startedAtUtc,
+        DateTimeOffset endedAtUtc,
+        bool isBillable,
+        decimal hourlyRate,
+        string? notes,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        EnsureNotClosed();
+
+        WorkOrderLaborEntry laborEntry =
+            GetLaborEntry(laborEntryId);
+
+        ValidateId(
+            technicianUserId,
+            nameof(technicianUserId),
+            "Technician user ID");
+
+        ValidateLaborType(type);
+
+        ValidateLaborTimeRange(
+            startedAtUtc,
+            endedAtUtc);
+
+        ValidateHourlyRate(
+            hourlyRate);
+
+        string? normalizedNotes =
+            NormalizeOptionalValue(notes);
+
+        ValidateOptionalLength(
+            normalizedNotes,
+            2000,
+            nameof(notes),
+            "Labor notes");
+
+        laborEntry.Update(
+            technicianUserId,
+            type,
+            startedAtUtc,
+            endedAtUtc,
+            isBillable,
+            hourlyRate,
+            normalizedNotes);
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+    }
+
+    public void RemoveLaborEntry(
+        Guid laborEntryId,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        EnsureNotClosed();
+
+        WorkOrderLaborEntry laborEntry =
+            GetLaborEntry(laborEntryId);
+
+        _laborEntries.Remove(laborEntry);
 
         MarkModified(
             modifiedAtUtc,
@@ -627,6 +809,80 @@ public sealed class WorkOrder : AggregateRoot
         MarkModified(
             cancelledAtUtc,
             modifiedByUserId);
+    }
+
+    private WorkOrderLaborEntry GetLaborEntry(
+        Guid laborEntryId)
+    {
+        ValidateId(
+            laborEntryId,
+            nameof(laborEntryId),
+            "Labor entry ID");
+
+        WorkOrderLaborEntry? laborEntry =
+            _laborEntries.SingleOrDefault(
+                existingLaborEntry =>
+                    existingLaborEntry.Id == laborEntryId);
+
+        if (laborEntry is null)
+        {
+            throw new InvalidOperationException(
+                "The work order labor entry does not exist.");
+        }
+
+        return laborEntry;
+    }
+
+    private static void ValidateLaborType(
+        WorkOrderLaborType type)
+    {
+        if (!Enum.IsDefined(type))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(type),
+                type,
+                "Work order labor type is invalid.");
+        }
+    }
+
+    private static void ValidateLaborTimeRange(
+        DateTimeOffset startedAtUtc,
+        DateTimeOffset endedAtUtc)
+    {
+        if (endedAtUtc <= startedAtUtc)
+        {
+            throw new ArgumentException(
+                "Labor end time must be after the labor start time.",
+                nameof(endedAtUtc));
+        }
+
+        if (endedAtUtc - startedAtUtc >
+            TimeSpan.FromHours(24))
+        {
+            throw new ArgumentException(
+                "A single labor entry cannot exceed 24 hours.",
+                nameof(endedAtUtc));
+        }
+    }
+
+    private static void ValidateHourlyRate(
+        decimal hourlyRate)
+    {
+        if (hourlyRate < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(hourlyRate),
+                hourlyRate,
+                "Hourly rate cannot be negative.");
+        }
+
+        if (hourlyRate > 10_000)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(hourlyRate),
+                hourlyRate,
+                "Hourly rate cannot exceed 10,000.");
+        }
     }
 
     private WorkOrderLineItem GetLineItem(
