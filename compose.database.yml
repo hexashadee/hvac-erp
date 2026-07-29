@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: hvac-erp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hvac_erp
+      POSTGRES_USER: hvac_erp
+      POSTGRES_PASSWORD: hvac_erp_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - hvac_erp_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U hvac_erp -d hvac_erp"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  hvac_erp_postgres_data:
