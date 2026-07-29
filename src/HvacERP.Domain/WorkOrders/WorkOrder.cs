@@ -8,6 +8,8 @@ public sealed class WorkOrder : AggregateRoot
 
     private readonly List<WorkOrderLaborEntry> _laborEntries = [];
 
+    private readonly List<WorkOrderNote> _notes = [];
+
     public IReadOnlyCollection<WorkOrderLineItem> LineItems =>
         _lineItems.AsReadOnly();
 
@@ -63,6 +65,28 @@ public sealed class WorkOrder : AggregateRoot
             LineItemSubtotal + LaborSubtotal,
             2,
             MidpointRounding.AwayFromZero);
+
+    public IReadOnlyCollection<WorkOrderNote> Notes =>
+        _notes.AsReadOnly();
+
+    public IReadOnlyCollection<WorkOrderNote> ActiveNotes =>
+        _notes
+            .Where(note => !note.IsDeleted)
+            .OrderByDescending(note => note.IsPinned)
+            .ThenByDescending(note => note.CreatedAtUtc)
+            .ToList()
+            .AsReadOnly();
+
+    public IReadOnlyCollection<WorkOrderNote> CustomerVisibleNotes =>
+        _notes
+            .Where(
+                note =>
+                    !note.IsDeleted &&
+                    note.IsCustomerVisible)
+            .OrderByDescending(note => note.IsPinned)
+            .ThenByDescending(note => note.CreatedAtUtc)
+            .ToList()
+            .AsReadOnly();
 
     public Guid CompanyId { get; private set; }
 
@@ -504,6 +528,132 @@ public sealed class WorkOrder : AggregateRoot
             modifiedByUserId);
     }
 
+    public WorkOrderNote AddNote(
+        Guid noteId,
+        WorkOrderNoteType type,
+        string content,
+        bool isPinned,
+        DateTimeOffset createdAtUtc,
+        Guid createdByUserId)
+    {
+        EnsureNotClosed();
+
+        ValidateId(
+            noteId,
+            nameof(noteId),
+            "Note ID");
+
+        if (_notes.Any(note => note.Id == noteId))
+        {
+            throw new InvalidOperationException(
+                "A work order note with the same ID already exists.");
+        }
+
+        ValidateNoteType(type);
+
+        string normalizedContent =
+            NormalizeRequiredNoteContent(content);
+
+        ValidateId(
+            createdByUserId,
+            nameof(createdByUserId),
+            "Created by user ID");
+
+        WorkOrderNote note =
+            new(
+                noteId,
+                type,
+                normalizedContent,
+                isPinned,
+                createdByUserId,
+                createdAtUtc);
+
+        _notes.Add(note);
+
+        MarkModified(
+            createdAtUtc,
+            createdByUserId);
+
+        return note;
+    }
+
+    public void UpdateNote(
+        Guid noteId,
+        WorkOrderNoteType type,
+        string content,
+        bool isPinned,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        EnsureNotClosed();
+
+        WorkOrderNote note =
+            GetActiveNote(noteId);
+
+        ValidateNoteType(type);
+
+        string normalizedContent =
+            NormalizeRequiredNoteContent(content);
+
+        ValidateId(
+            modifiedByUserId,
+            nameof(modifiedByUserId),
+            "Modified by user ID");
+
+        ValidateChronology(
+            modifiedAtUtc,
+            note.CreatedAtUtc,
+            nameof(modifiedAtUtc),
+            "Note modification time cannot be before its creation time.");
+
+        note.Update(
+            type,
+            normalizedContent,
+            isPinned,
+            modifiedByUserId,
+            modifiedAtUtc);
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+    }
+
+    public void DeleteNote(
+        Guid noteId,
+        string deletionReason,
+        DateTimeOffset deletedAtUtc,
+        Guid deletedByUserId)
+    {
+        EnsureNotClosed();
+
+        WorkOrderNote note =
+            GetActiveNote(noteId);
+
+        string normalizedDeletionReason =
+            NormalizeRequiredDeletionReason(
+                deletionReason);
+
+        ValidateId(
+            deletedByUserId,
+            nameof(deletedByUserId),
+            "Deleted by user ID");
+
+        ValidateChronology(
+            deletedAtUtc,
+            note.CreatedAtUtc,
+            nameof(deletedAtUtc),
+            "Note deletion time cannot be before its creation time.");
+
+        note.Delete(
+            normalizedDeletionReason,
+            deletedByUserId,
+            deletedAtUtc);
+
+        MarkModified(
+            deletedAtUtc,
+            deletedByUserId);
+    }
+
     public void UpdateDetails(
         WorkOrderType type,
         WorkOrderPriority priority,
@@ -809,6 +959,106 @@ public sealed class WorkOrder : AggregateRoot
         MarkModified(
             cancelledAtUtc,
             modifiedByUserId);
+    }
+
+    private WorkOrderNote GetActiveNote(
+        Guid noteId)
+    {
+        ValidateId(
+            noteId,
+            nameof(noteId),
+            "Note ID");
+
+        WorkOrderNote? note =
+            _notes.SingleOrDefault(
+                existingNote =>
+                    existingNote.Id == noteId);
+
+        if (note is null)
+        {
+            throw new InvalidOperationException(
+                "The work order note does not exist.");
+        }
+
+        if (note.IsDeleted)
+        {
+            throw new InvalidOperationException(
+                "A deleted work order note cannot be changed.");
+        }
+
+        return note;
+    }
+
+    private static void ValidateNoteType(
+        WorkOrderNoteType type)
+    {
+        if (!Enum.IsDefined(type))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(type),
+                type,
+                "Work order note type is invalid.");
+        }
+    }
+
+    private static string NormalizeRequiredNoteContent(
+        string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            throw new ArgumentException(
+                "Note content is required.",
+                nameof(content));
+        }
+
+        string normalizedContent =
+            content.Trim();
+
+        if (normalizedContent.Length > 10_000)
+        {
+            throw new ArgumentException(
+                "Note content cannot exceed 10,000 characters.",
+                nameof(content));
+        }
+
+        return normalizedContent;
+    }
+
+    private static string NormalizeRequiredDeletionReason(
+        string deletionReason)
+    {
+        if (string.IsNullOrWhiteSpace(deletionReason))
+        {
+            throw new ArgumentException(
+                "A deletion reason is required.",
+                nameof(deletionReason));
+        }
+
+        string normalizedDeletionReason =
+            deletionReason.Trim();
+
+        if (normalizedDeletionReason.Length > 500)
+        {
+            throw new ArgumentException(
+                "Deletion reason cannot exceed 500 characters.",
+                nameof(deletionReason));
+        }
+
+        return normalizedDeletionReason;
+    }
+
+    private static void ValidateChronology(
+        DateTimeOffset actionAtUtc,
+        DateTimeOffset earliestAllowedAtUtc,
+        string parameterName,
+        string message)
+    {
+        if (actionAtUtc < earliestAllowedAtUtc)
+        {
+            throw new ArgumentException(
+                message,
+                parameterName);
+        }
     }
 
     private WorkOrderLaborEntry GetLaborEntry(
