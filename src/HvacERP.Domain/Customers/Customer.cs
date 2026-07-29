@@ -4,6 +4,8 @@ namespace HvacERP.Domain.Customers;
 
 public sealed class Customer : AggregateRoot
 {
+    private readonly List<CustomerContact> _contacts = [];
+
     public Guid CompanyId { get; private set; }
 
     public string CustomerNumber { get; private set; }
@@ -13,6 +15,9 @@ public sealed class Customer : AggregateRoot
     public CustomerType Type { get; private set; }
 
     public bool IsActive { get; private set; }
+
+    public IReadOnlyCollection<CustomerContact> Contacts =>
+        _contacts.AsReadOnly();
 
     private Customer(
         Guid id,
@@ -48,9 +53,12 @@ public sealed class Customer : AggregateRoot
         string normalizedCustomerNumber =
             NormalizeCustomerNumber(customerNumber);
 
-        string normalizedName = NormalizeName(name);
+        string normalizedName =
+            NormalizeName(name);
 
-        ValidateCustomerNumber(normalizedCustomerNumber);
+        ValidateCustomerNumber(
+            normalizedCustomerNumber);
+
         ValidateName(normalizedName);
         ValidateType(type);
 
@@ -70,13 +78,137 @@ public sealed class Customer : AggregateRoot
         DateTimeOffset modifiedAtUtc,
         Guid modifiedByUserId)
     {
-        string normalizedName = NormalizeName(name);
+        string normalizedName =
+            NormalizeName(name);
 
         ValidateName(normalizedName);
         ValidateType(type);
 
         Name = normalizedName;
         Type = type;
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+    }
+
+    public void AddContact(
+        CustomerContact contact,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        ArgumentNullException.ThrowIfNull(contact);
+
+        if (_contacts.Any(
+                existingContact =>
+                    existingContact.Id == contact.Id))
+        {
+            return;
+        }
+
+        if (contact.IsPrimary)
+        {
+            ClearPrimaryContact();
+        }
+
+        _contacts.Add(contact);
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+    }
+
+    public void RemoveContact(
+        Guid contactId,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        ValidateContactId(contactId);
+
+        CustomerContact? contact =
+            _contacts.SingleOrDefault(
+                existingContact =>
+                    existingContact.Id == contactId);
+
+        if (contact is null)
+        {
+            return;
+        }
+
+        _contacts.Remove(contact);
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+    }
+
+    public void SetPrimaryContact(
+        Guid contactId,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        ValidateContactId(contactId);
+
+        CustomerContact contact =
+            GetContact(contactId);
+
+        if (!contact.IsActive)
+        {
+            throw new InvalidOperationException(
+                "An inactive contact cannot be the primary contact.");
+        }
+
+        if (contact.IsPrimary)
+        {
+            return;
+        }
+
+        ClearPrimaryContact();
+        contact.SetPrimary(true);
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+    }
+
+    public void DeactivateContact(
+        Guid contactId,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        ValidateContactId(contactId);
+
+        CustomerContact contact =
+            GetContact(contactId);
+
+        if (!contact.IsActive)
+        {
+            return;
+        }
+
+        contact.Deactivate();
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+    }
+
+    public void ReactivateContact(
+        Guid contactId,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        ValidateContactId(contactId);
+
+        CustomerContact contact =
+            GetContact(contactId);
+
+        if (contact.IsActive)
+        {
+            return;
+        }
+
+        contact.Reactivate();
 
         MarkModified(
             modifiedAtUtc,
@@ -115,6 +247,24 @@ public sealed class Customer : AggregateRoot
             modifiedByUserId);
     }
 
+    private CustomerContact GetContact(Guid contactId)
+    {
+        return _contacts.SingleOrDefault(
+                   contact =>
+                       contact.Id == contactId)
+               ?? throw new ArgumentException(
+                   "Contact was not found.",
+                   nameof(contactId));
+    }
+
+    private void ClearPrimaryContact()
+    {
+        foreach (CustomerContact contact in _contacts)
+        {
+            contact.SetPrimary(false);
+        }
+    }
+
     private static string NormalizeCustomerNumber(
         string customerNumber)
     {
@@ -135,6 +285,16 @@ public sealed class Customer : AggregateRoot
             throw new ArgumentException(
                 "Company ID cannot be empty.",
                 nameof(companyId));
+        }
+    }
+
+    private static void ValidateContactId(Guid contactId)
+    {
+        if (contactId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "Contact ID cannot be empty.",
+                nameof(contactId));
         }
     }
 
