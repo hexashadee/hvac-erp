@@ -6,6 +6,8 @@ public sealed class Customer : AggregateRoot
 {
     private readonly List<CustomerContact> _contacts = [];
 
+    private readonly List<CustomerLocation> _locations = [];
+
     public Guid CompanyId { get; private set; }
 
     public string CustomerNumber { get; private set; }
@@ -18,6 +20,9 @@ public sealed class Customer : AggregateRoot
 
     public IReadOnlyCollection<CustomerContact> Contacts =>
         _contacts.AsReadOnly();
+
+    public IReadOnlyCollection<CustomerLocation> Locations =>
+        _locations.AsReadOnly();
 
     private Customer(
         Guid id,
@@ -215,6 +220,163 @@ public sealed class Customer : AggregateRoot
             modifiedByUserId);
     }
 
+    public void AddLocation(
+        CustomerLocation location,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        ArgumentNullException.ThrowIfNull(location);
+
+        if (_locations.Any(
+                existingLocation =>
+                    existingLocation.Id == location.Id))
+        {
+            return;
+        }
+
+        if (location.IsPrimary)
+        {
+            ClearPrimaryLocation();
+        }
+
+        if (location.IsBillingLocation)
+        {
+            ClearBillingLocation();
+        }
+
+        _locations.Add(location);
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+    }
+
+    public void RemoveLocation(
+        Guid locationId,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        ValidateLocationId(locationId);
+
+        CustomerLocation? location =
+            _locations.SingleOrDefault(
+                existingLocation =>
+                    existingLocation.Id == locationId);
+
+        if (location is null)
+        {
+            return;
+        }
+
+        _locations.Remove(location);
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+    }
+
+    public void SetPrimaryLocation(
+        Guid locationId,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        ValidateLocationId(locationId);
+
+        CustomerLocation location =
+            GetLocation(locationId);
+
+        if (!location.IsActive)
+        {
+            throw new InvalidOperationException(
+                "An inactive location cannot be the primary location.");
+        }
+
+        if (location.IsPrimary)
+        {
+            return;
+        }
+
+        ClearPrimaryLocation();
+        location.SetPrimary(true);
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+    }
+
+    public void SetBillingLocation(
+        Guid locationId,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        ValidateLocationId(locationId);
+
+        CustomerLocation location =
+            GetLocation(locationId);
+
+        if (!location.IsActive)
+        {
+            throw new InvalidOperationException(
+                "An inactive location cannot be the billing location.");
+        }
+
+        if (location.IsBillingLocation)
+        {
+            return;
+        }
+
+        ClearBillingLocation();
+        location.SetBillingLocation(true);
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+    }
+
+    public void DeactivateLocation(
+        Guid locationId,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        ValidateLocationId(locationId);
+
+        CustomerLocation location =
+            GetLocation(locationId);
+
+        if (!location.IsActive)
+        {
+            return;
+        }
+
+        location.Deactivate();
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+    }
+
+    public void ReactivateLocation(
+        Guid locationId,
+        DateTimeOffset modifiedAtUtc,
+        Guid modifiedByUserId)
+    {
+        ValidateLocationId(locationId);
+
+        CustomerLocation location =
+            GetLocation(locationId);
+
+        if (location.IsActive)
+        {
+            return;
+        }
+
+        location.Reactivate();
+
+        MarkModified(
+            modifiedAtUtc,
+            modifiedByUserId);
+    }
+
     public void Deactivate(
         DateTimeOffset modifiedAtUtc,
         Guid modifiedByUserId)
@@ -257,11 +419,37 @@ public sealed class Customer : AggregateRoot
                    nameof(contactId));
     }
 
+    private CustomerLocation GetLocation(Guid locationId)
+    {
+        return _locations.SingleOrDefault(
+                   location =>
+                       location.Id == locationId)
+               ?? throw new ArgumentException(
+                   "Location was not found.",
+                   nameof(locationId));
+    }
+
     private void ClearPrimaryContact()
     {
         foreach (CustomerContact contact in _contacts)
         {
             contact.SetPrimary(false);
+        }
+    }
+
+    private void ClearPrimaryLocation()
+    {
+        foreach (CustomerLocation location in _locations)
+        {
+            location.SetPrimary(false);
+        }
+    }
+
+    private void ClearBillingLocation()
+    {
+        foreach (CustomerLocation location in _locations)
+        {
+            location.SetBillingLocation(false);
         }
     }
 
@@ -295,6 +483,16 @@ public sealed class Customer : AggregateRoot
             throw new ArgumentException(
                 "Contact ID cannot be empty.",
                 nameof(contactId));
+        }
+    }
+
+    private static void ValidateLocationId(Guid locationId)
+    {
+        if (locationId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "Location ID cannot be empty.",
+                nameof(locationId));
         }
     }
 
