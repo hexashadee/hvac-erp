@@ -6,6 +6,7 @@
     <Project Path="src/HvacERP.Infrastructure/HvacERP.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/HvacERP.Api.Tests/HvacERP.Api.Tests.csproj" />
     <Project Path="tests/HvacERP.Application.Tests/HvacERP.Application.Tests.csproj" />
     <Project Path="tests/HvacERP.Domain.Tests/HvacERP.Domain.Tests.csproj" />
     <Project Path="tests/HvacERP.Infrastructure.Tests/HvacERP.Infrastructure.Tests.csproj" />
