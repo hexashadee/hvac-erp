@@ -1,8 +1,10 @@
+using Amazon.RDS.Util;
 using HvacERP.Application.Dispatch.Queries.GetSchedules;
 using HvacERP.Infrastructure.Dispatch.Queries;
 using HvacERP.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 
 namespace HvacERP.Infrastructure;
 
@@ -19,20 +21,82 @@ public static class DependencyInjection
                 nameof(connectionString));
         }
 
-        services.AddDbContext<HvacErpDbContext>(
-            options =>
-            {
-                options.UseNpgsql(
-                    connectionString,
-                    npgsqlOptions =>
-                    {
-                        npgsqlOptions.MigrationsAssembly(
-                            typeof(HvacErpDbContext).Assembly.FullName);
+        bool useAwsIamAuthentication =
+            string.Equals(
+                Environment.GetEnvironmentVariable(
+                    "AWS_RDS_IAM_AUTH"),
+                "true",
+                StringComparison.OrdinalIgnoreCase);
 
-                        npgsqlOptions.EnableRetryOnFailure(
-                            maxRetryCount: 5);
-                    });
-            });
+        if (useAwsIamAuthentication)
+        {
+            NpgsqlConnectionStringBuilder connectionBuilder =
+                new(connectionString);
+
+            connectionBuilder.SslMode = SslMode.Require;
+            connectionBuilder.Password = null;
+
+            NpgsqlDataSourceBuilder dataSourceBuilder =
+                new(connectionBuilder.ConnectionString);
+
+            dataSourceBuilder.UsePeriodicPasswordProvider(
+                (settings, cancellationToken) =>
+                {
+                    string authenticationToken =
+                        RDSAuthTokenGenerator.GenerateAuthToken(
+                            settings.Host,
+                            settings.Port,
+                            settings.Username);
+
+                    return ValueTask.FromResult(
+                        authenticationToken);
+                },
+                successRefreshInterval:
+                    TimeSpan.FromMinutes(10),
+                failureRefreshInterval:
+                    TimeSpan.FromSeconds(30));
+
+            NpgsqlDataSource dataSource =
+                dataSourceBuilder.Build();
+
+            services.AddSingleton(dataSource);
+
+            services.AddDbContext<HvacErpDbContext>(
+                options =>
+                {
+                    options.UseNpgsql(
+                        dataSource,
+                        npgsqlOptions =>
+                        {
+                            npgsqlOptions.MigrationsAssembly(
+                                typeof(HvacErpDbContext)
+                                    .Assembly
+                                    .FullName);
+
+                            npgsqlOptions.EnableRetryOnFailure(
+                                maxRetryCount: 5);
+                        });
+                });
+        }
+        else
+        {
+            services.AddDbContext<HvacErpDbContext>(
+                options =>
+                {
+                    options.UseNpgsql(
+                        connectionString,
+                        npgsqlOptions =>
+                        {
+                            npgsqlOptions.MigrationsAssembly(
+                                typeof(HvacErpDbContext)
+                                    .Assembly
+                                    .FullName);
+
+                            npgsqlOptions.EnableRetryOnFailure(
+                                maxRetryCount: 5);
+                        });
+                });
+        }
 
         services.AddScoped<
             IDispatchScheduleQueries,
