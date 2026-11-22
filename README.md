@@ -18,42 +18,42 @@ The goal is to give each company control over its users, permissions and workflo
 
 ## Repository today
 
-* A .NET 10 ASP.NET Core API with basic information, health, database connectivity, and read only dispatch schedule endpoints.
-* Domain model code for organizations, memberships, roles, customers, equipment, documents, work orders, checklists, signatures, and dispatch scheduling.
-* Application permission resolution abstractions and logic.
-* EF Core PostgreSQL persistence configuration and an initial migration for dispatch schedules and assignments.
+* A .NET 10 ASP.NET Core API with basic information, health, database connectivity, and read only dispatch schedule endpoints. <br>
+* Domain model code for organizations, memberships, roles, customers, equipment, documents, work orders, checklists, signatures, and dispatch scheduling.<br>
+* Application permission resolution abstractions and logic. <br>
+* EF Core PostgreSQL persistence configuration and an initial migration for dispatch schedules and assignments. <br>
 * Docker configuration, local PostgreSQL Compose file, architecture notes, and automated tests.
-
+<br>
 **Not established by this snapshot:** a user facing web application, a working login flow, API enforcement of tenant permissions, complete customer and work order persistence and CRUD endpoints, protected access challenges, inventory or finance modules, live production hosting, or completed migration.
 
-## Tech
-API: ASP.NET Core / C# / .NET 10
-Domain and application: Separate C# projects
-Data access: EF Core / Npgsql / PostgreSQL
-Deployment: Dockerfile and PostgreSQL Compose
-AWS: Optional RDS IAM authentication code
-Testing: .NET domain, application and API tests
-Frontend: Not implemented yet
+## Tech <br>
+API: ASP.NET Core / C# / .NET 10  <br>
+Domain and application: Separate C# projects  <br>
+Data access: EF Core / Npgsql / PostgreSQL <br>
+Deployment: Dockerfile and PostgreSQL Compose <br>
+AWS: Optional RDS IAM authentication code <br>
+Testing: .NET domain, application and API tests <br>
+Frontend: Not implemented yet <br>
 
-Earlier research included JavaScript backend options. The current codebase is .NET, so that's what I'm continuing with unless there's a reason to change it.
+Earlier research included JavaScript backend options. The current codebase is .NET, so that's what I'm continuing with unless there's a reason to change it. <br>
 
-Earlier planning materials mention alternative JavaScript backends; the **actual committed code is .NET**, which should guide future implementation unless a formal architecture decision changes it.
+Earlier planning materials mention alternative JavaScript backends; the **actual committed code is .NET**, which should guide future implementation unless a formal architecture decision changes it.<br>
 
-## Documentation
+## Documentation <br><br>
 
-* [Project goals and boundaries](docs/PROJECT_GOALS.md)
-* [Current implementation status](docs/STATUS.md)
-* [Development roadmap](docs/ROADMAP.md)
-* [Feature inventory](docs/FEATURES.md)
-* [Commercial product strategy](docs/COMMERCIALIZATION.md)
-* [Domain model](docs/architecture/domain-model.md)
+* [Project goals and boundaries](docs/PROJECT_GOALS.md) <br> 
+* [Current implementation status](docs/STATUS.md) <br> 
+* [Development roadmap](docs/ROADMAP.md) <br> 
+* [Feature inventory](docs/FEATURES.md) <br>
+* [Commercial product strategy](docs/COMMERCIALIZATION.md) <br>
+* [Domain model](docs/architecture/domain-model.md) <br> <br>
 
-## Developer starting point
+## Developer starting point <br>
 
-Requires .NET 10 SDK and Docker with Compose for local PostgreSQL.
+Requires .NET 10 SDK and Docker with Compose for local PostgreSQL. <br>
 
-```powershell
-# From the repository root
+```powershell 
+# From the repository root 
 docker compose -f compose.database.yml up -d
 dotnet restore HvacERP.slnx
 dotnet test HvacERP.slnx
@@ -61,11 +61,11 @@ $env:HVAC_ERP_CONNECTION_STRING = 'Host=localhost;Port=5432;Database=hvac_erp;Us
 dotnet run --project src/HvacERP.Api
 ```
 
-The Compose password is for **local development only**. Never reuse it in a public environment. 
+The Compose password is for **local development only**. Never reuse it in a public environment. <br>
 
-## Release policy
-No production launch date has been committed. See the [roadmap](docs/ROADMAP.md) for gates.
+## Release policy <br>
+No production launch date has been committed. See the [roadmap](docs/ROADMAP.md) for gates. <br>
 
-## Ownership
+## Ownership <br>
 
 NullSupport ERP is being developed under NullSupport LLC
