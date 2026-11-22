@@ -1,22 +1,20 @@
-# HVAC ERP
+# NullSupport ERP
 
-A modular enterprise resource planning platform being developed initially for HYVAC Technologies, with the longer term goal of serving other HVAC businesses as a commercial software product.
+Modular ERP platform being developed by NullSupport LLC, with HYVAC Technologies serving as the initial implementation and intended pilot.
 
-> **Status: backend foundation in development. Not production ready.** This summary describes what was observed in the repository snapshot reviewed November 22, 2026. It is not a verified deployment status. See [Project status](docs/STATUS.md).
+The goal is to consolidate operations into one system, including companies and branches, employees, permissions, customers, locations, equipment, work orders and dispatch scheduling. Purchasing, inventory, quotes, invoicing, reporting and integrations will be added as development progresses.
 
-## Why this exists
+The platform is being structured to support multiple companies independently, each with its own records, permissions and configurable workflows.
 
-The objective is to give an HVAC business one place to manage companies and branches, employees and permissions, customers and locations, equipment, service work orders, dispatch schedules, and eventually purchasing, inventory, quotes, invoices, reporting, and integrations. HYVAC is the initial use case and prospective pilot customer. The longer term product goal is to support many independent companies with securely isolated records and configurable workflows.
+Some functionality will follow established industry workflows, using existing systems as a reference. The implementation, design and code will be original or appropriately licensed.
 
-The project may reproduce common *business workflows* found in existing HVAC ERP software, including Blue Streak, but the implementation, branding, design, and code must be original or properly licensed.
+Each company will have its own administrative controls. Designated administrators will be able to manage employee accounts, assign roles, adjust individual permissions and configure which modules and workflows are available. Access can be controlled at the company, branch, department and individual function level, including who can view, create, modify or approve certain records and actions.
 
-## Goals
+Security is being designed in layers, rather than relying on a single login or permission level. Authentication establishes user identity, followed by company membership verification, role based access controls and permissions for specific resources or actions. Protected Access adds another layer for sensitive areas, allowing additional authentication to be required before certain information or functions can be accessed.
 
-1. Deliver a reliable internal pilot for HYVAC with a useful customer to work order to dispatch workflow.
-2. Build granular, enforceable company and branch aware permissions and additional protection for sensitive actions.
-3. Preserve operational history and provide dependable audit trails, backups, and recovery.
-4. Keep the product modular so future inventory, purchasing, billing, reporting, and integrations fit without a rewrite.
-5. Design tenant isolation early so an eventual subscription business is possible, without treating commercialization as already approved or launched.
+These controls will be enforced through the API, not just the interface. Company data will remain isolated, administrative access will be limited to the appropriate organization, and sensitive actions and permission changes will be recorded through audit logging.
+
+The goal is to give each company control over its users, permissions and workflows without compromising security or requiring changes to the underlying application.
 
 ## What is in this repository today
 
@@ -28,21 +26,20 @@ The project may reproduce common *business workflows* found in existing HVAC ERP
 
 **Not established by this snapshot:** a user facing web application, a working login flow, API enforcement of tenant permissions, complete customer and work order persistence and CRUD endpoints, protected access challenges, inventory or finance modules, live production hosting, or completed HYVAC migration.
 
-## Technology in code
+## Tech
+API: ASP.NET Core / C# / .NET 10
+Domain and application: Separate C# projects
+Data access: EF Core / Npgsql / PostgreSQL
+Deployment: Dockerfile and PostgreSQL Compose
+AWS: Optional RDS IAM authentication code
+Testing: .NET domain, application and API tests
+Frontend: Not implemented yet
 
-| Layer | Current repository |
-| --- | --- |
-| API | ASP.NET Core and C# on .NET 10 |
-| Domain and application | Separate C# projects |
-| Data access | EF Core with Npgsql and PostgreSQL |
-| Deployment foundation | Dockerfile and PostgreSQL Compose |
-| Database cloud preparation | Optional AWS RDS IAM authentication code |
-| Tests | .NET test projects for domain, application, and API |
-| Frontend | Not present in this snapshot |
+Earlier research included JavaScript backend options. The current codebase is .NET, so that's what I'm continuing with unless there's a reason to change it.
 
 Earlier planning materials mention alternative JavaScript backends; the **actual committed code is .NET**, which should guide future implementation unless a formal architecture decision changes it.
 
-## Key documentation
+## Documentation
 
 * [Project goals and boundaries](docs/PROJECT_GOALS.md)
 * [Current implementation status](docs/STATUS.md)
@@ -64,12 +61,11 @@ $env:HVAC_ERP_CONNECTION_STRING = 'Host=localhost;Port=5432;Database=hvac_erp;Us
 dotnet run --project src/HvacERP.Api
 ```
 
-The Compose password is for **local development only**. Never reuse it in a public environment. Database migrations and API runtime verification still need to be performed in the intended environment. Never commit a real `.env` file or secrets.
+The Compose password is for **local development only**. Never reuse it in a public environment. 
 
 ## Release policy
-
 No production launch date has been committed. A HYVAC pilot needs verified core business workflows, secured endpoints, data isolation tests, operational backups, observability, user acceptance testing, and a controlled migration and rollback plan. See the [roadmap](docs/ROADMAP.md) for gates, not promises.
 
 ## Ownership
 
-Commercial licensing, source code ownership, use of HYVAC resources and data, and any rights required to integrate with existing software must be agreed in writing before marketing or selling this product.
+NullSupport ERP is being developed under NullSupport LLC
