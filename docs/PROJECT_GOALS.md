@@ -1,47 +1,26 @@
 # Project goals
 
-## Purpose
+NullSupport ERP is a modular operations platform being developed under NullSupport LLC. The goal is to bring customer records, equipment, work orders, dispatch and the surrounding business functions into one system.
 
-Create an original HVAC ERP system that initially supports HYVAC Technologies and can later evolve into a configurable commercial product for other HVAC contractors.
+The platform is being structured for multiple companies, each with separate records, users, permissions and configurable workflows.
 
-## Primary outcome
+## Goals
 
-HYVAC staff should be able to manage a job from customer and location through work order creation, scheduling, technician assignment, activity history, and job completion without maintaining disconnected records.
+1. Complete a customer to work order to dispatch workflow, including scheduling, technician assignment, status changes and activity history.
+2. Give each company its own administration controls for employee accounts, roles, individual permissions and available modules or workflows.
+3. Enforce access through the API. Authentication, company membership and role permissions should all be checked before granting access to records or actions.
+4. Support Protected Access for sensitive areas, with additional authentication where required.
+5. Keep operational history and audit logs, with backups and recovery tested before production use.
+6. Keep the platform modular so inventory, purchasing, quotes, invoicing, reporting and integrations can be added as development progresses.
 
-## Product principles
+## Initial scope
 
-1. **Operational usefulness first.** Build and verify one complete workflow before expanding to every module.
-2. **Company isolation.** Each customer business owns and can access only its own data.
-3. **Server enforced permissions.** UI visibility alone is not security. Enforce permissions and tenant context in APIs and persistence.
-4. **Sensitive access requires stronger proof.** Planned Protected Access should add a time limited authentication challenge and audit records where appropriate.
-5. **Traceable changes.** Changes to jobs, privileges, and significant records should be auditable.
-6. **Modularity.** Extend the product with new modules without creating distinct codebases for each customer.
-7. **Practical delivery.** Pilot HYVAC before promising a complete Blue Streak replacement.
+The first usable workflow needs customer and location records, work order creation, dispatch scheduling, technician assignment and the ability to retrieve and update the records.
 
-## Initial HYVAC pilot scope
+Employee login, company and branch permissions, administrative controls and audit logging are part of that initial scope. A user interface is also required before the platform can be tested as an operational system.
 
-* Secure employee login and company membership.
-* Company, branch, and role management sufficient for actual HYVAC staff.
-* Customers, contacts, service locations, and equipment.
-* Work order lifecycle, notes, assignments, and basic checklists.
-* Dispatch schedule and technician assignment experience.
-* Minimal dashboard or reports needed to operate and review work.
-* Audit events, backup and restore proof, and error monitoring.
+## Later scope
 
-Actual HYVAC processes and data sources must be confirmed with stakeholders before these requirements become acceptance criteria.
+Inventory, purchasing, quotes, invoices, accounting integrations, reporting and automation will be developed around the core workflows.
 
-## Later operational scope
-
-Quoting, purchasing, inventory, invoices, accounting connections, field mobile usability, notifications, advanced reporting, and other modules are candidates for later releases. Prioritization depends on HYVAC's real workflows and integration dependencies.
-
-## Long term commercial goal
-
-Support subscription based access for independent HVAC companies. Each company should have isolated data, its own users, branch structure, roles, branding options, and configurable features. Commercial release also requires onboarding, billing, legal agreements, support, security review, and validation of actual customer willingness to pay.
-
-## What success looks like
-
-* Staff can complete agreed pilot workflows on a test environment and then in a carefully controlled production pilot.
-* A user from one company cannot read or modify another company's data, demonstrated by automated integration tests.
-* The service can be deployed, monitored, backed up, restored, and rolled back by documented procedures.
-* The owner of the code and the rights to commercialize it are confirmed in writing.
-* Potential external customers confirm the product solves a problem they would pay to address.
+The longer term goal is to support other businesses without maintaining separate versions of the application for each company. Commercial availability is a future direction, not a current release.

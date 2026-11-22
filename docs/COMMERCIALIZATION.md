@@ -1,33 +1,23 @@
-# Future commercialization strategy
+# Commercial product strategy
 
-## Proposed direction
+NullSupport ERP is being developed under NullSupport LLC. The platform is intended to support independent companies with separate records, users, permissions and workflows.
 
-HYVAC is the intended initial deployment and potential design partner. If the platform proves operationally useful, the same product could be offered to other HVAC businesses as subscription software.
+Commercial availability is a longer term goal. There is no external release or established subscription model at this stage.
 
-This is an **aspiration**, not an existing product launch, customer contract, or revenue forecast.
+## Platform requirements
 
-## Architecture required for SaaS
+Each company needs its own administrative environment. Authorized administrators should be able to manage employees, roles, individual permissions and which modules and workflows are available.
 
-* Company based tenant boundaries in the database, application services, APIs, searches and exports.
-* Authentication and membership enforcement at every entry point.
-* Tenant specific users, roles, branch structure, settings and operational data.
-* Provisioning, suspension, deletion and export processes.
-* Centralized observability that does not leak one customer's sensitive data to another.
-* Configurable workflows without maintaining a separate fork for each company.
-* Audited administrator access, support permissions, backups and restoration.
+Authentication and company membership checks must be enforced through the API. The database and application need to keep company records isolated, including searches, reports and exports.
 
-## Product validation
+Protected Access will allow additional authentication for selected sensitive information and actions. Administrative changes and sensitive activity should be logged.
 
-Interview HVAC contractors other than HYVAC to understand business problems, software alternatives, required integrations, data migration hurdles and purchasing willingness. Pilot the smallest valuable module set before expanding into a full ERP replacement.
+## Before offering it to other companies
 
-## Revenue strategy
+The core workflows need to be completed and tested first. After that, company onboarding, account management, subscriptions, data import and export, support and production monitoring can be developed.
 
-A monthly subscription by company size, user count, enabled modules, or usage is a possible model. Prior illustrative price points of $199, $499, and $999 per month are **hypotheses only**, not validated pricing or expected revenue. Include implementation, data migration, support, cloud costs, sales and payment fees in pricing analysis.
+Security testing, backups, recovery and reliable deployment are also required before businesses depend on it.
 
-## Legal and ownership decisions
+## Ownership
 
-Resolve in writing who owns existing and future source code, whether HYVAC has an exclusive or nonexclusive license, what rights attach to work performed with HYVAC time or resources, and who can commercialize or resell the product. Review use of confidential Blue Streak information, software design, proprietary documentation, trade secrets and third party components. Do not use production HYVAC customer records for external demonstrations without authorization and proper sanitization.
-
-## External launch requirements
-
-Independent security assessment, tenant isolation tests, operating policies, support terms, privacy disclosures, backup and disaster recovery planning, onboarding, contracts and subscription billing all need approval before paid customers depend on the service.
+NullSupport ERP is being developed under NullSupport LLC. Commercial terms and any third party licensing requirements can be reviewed before distribution.

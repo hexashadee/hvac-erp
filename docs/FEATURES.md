@@ -1,27 +1,43 @@
 # Feature inventory
 
-The labels below distinguish source code implementation from functional completion. **Domain model exists** means types and domain behavior exist, not a usable end to end feature.
+Tracking what exists in the repository separately from what is usable. A defined model is not necessarily a completed feature.
 
-| Capability | Current evidence | Next requirement | Priority |
-| --- | --- | --- | --- |
-| Company and branch entities | Domain model exists | Persist, validate and expose through secured APIs | Critical |
-| Users and company membership | Domain model exists | Connect identity provider and enforce membership | Critical |
-| Roles and permissions | Domain types and resolver exist | Persist assignments and enforce on every endpoint | Critical |
-| Protected Access | Architectural specification | Implement policy store, challenge, expiry, audits and tests | High |
-| Customers and contacts | Domain model exists | Persistence, API operations, UI, tenant checks | Critical |
-| Service locations | Domain model exists | Persistence, API operations, UI | Critical |
-| Equipment | Domain model exists | Persistence, linked service history | High |
-| Work orders | Extensive domain model exists | Persistence, CRUD, transitions, UI and audit | Critical |
-| Checklists, attachments, signatures | Domain model exists | Storage, APIs, authorizations and UI | High |
-| Dispatch schedules | EF mapping, migration, read API and query exist | Authentication, tenant filter, writes and calendar UI | Critical |
-| Audit history | Some domain audit fields | Durable application audit events and reporting | Critical |
-| Reporting | Not established | Minimum operational views and exports | Medium |
-| Inventory and purchasing | Architectural intent | Business requirements and implementation | Later |
-| Quotes and invoices | Architectural intent | Business rules, persistence, integrations | Later |
-| Frontend application | Not found | Implement authenticated workflow UI | Critical |
-| SaaS subscriptions | Not found | Billing, provisioning, account lifecycle | Commercial phase |
-| CI and deployment | Docker build configuration exists | Continuous validation, staging, release process | Critical |
+## Foundation
 
-## Completion rules
+**Companies and branches:** Domain models exist. Persistence and secured API operations still needed.
 
-A feature is **completed** only when its backend, persistent data where appropriate, authorization, user experience, automated tests, and stakeholder acceptance have been verified. Source files alone do not satisfy this threshold.
+**Employees and memberships:** Domain models exist. Login, account management and company membership enforcement still needed.
+
+**Roles and permissions:** Domain models and permission resolution logic exist. Administrator controls, stored assignments and API enforcement still needed.
+
+**Protected Access:** Planned. Requires additional authentication for selected resources or actions, along with access checks and audit records.
+
+**Audit history:** Some record level fields exist. Complete audit logging for sensitive activity and permission changes is still needed.
+
+## Operations
+
+**Customers, contacts and locations:** Domain models exist. Database operations, API endpoints and interface still needed.
+
+**Equipment:** Domain models exist. Persistence and links to service records still needed.
+
+**Work orders:** Domain models and business rules exist. Persistence, create and update endpoints, workflow transitions and interface still needed.
+
+**Checklists, documents and signatures:** Domain models exist. Storage, access controls and user workflows still needed.
+
+**Dispatch scheduling:** EF Core configuration, an initial migration and read API exist. Authentication, company filtering, create and update operations and scheduling interface are still needed.
+
+## Later modules
+
+**Inventory and purchasing:** Planned.
+
+**Quotes and invoicing:** Planned.
+
+**Reporting and integrations:** Planned beyond the existing basic API and database diagnostics.
+
+**Subscriptions and company onboarding:** Future commercial phase.
+
+## Deployment
+
+Docker and local PostgreSQL configuration are present. Production hosting, automated deployment, monitoring and backup recovery testing have not been verified.
+
+A feature should be marked complete when its actual workflow, persistence, permissions and tests have been checked, not just when the models exist.

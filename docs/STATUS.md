@@ -1,42 +1,47 @@
-# Implementation status
+# Current implementation status
 
-**Review basis:** Source snapshot from `hvac-erp-main.zip`, inspected November 22, 2026. This is a static source review, not a verified build, running environment, or production audit. No percentage complete is defensible without agreed feature acceptance criteria.
+This is based on the source code snapshot reviewed November 22, 2026. It describes what is present in the repository, not a completed build or deployed environment.
 
-## Confirmed in source
+## Repository today
 
-| Area | Evidence | Interpretation |
-| --- | --- | --- |
-| Solution structure | `HvacERP.slnx` and Domain, Application, Infrastructure, API projects | Real modular C# foundation |
-| API | `src/HvacERP.Api/Program.cs` | Root information endpoint, health endpoint, database connectivity endpoint, read only dispatch schedules endpoint |
-| Domain | `src/HvacERP.Domain/` | Rich entity and business rule implementation for companies, branches, users, permissions, customers, equipment, documents, work orders, and dispatch |
-| Authorization logic | `EffectivePermissionResolver.cs` and authorization tests | Permission resolver exists; authorization middleware and real authenticated API enforcement not demonstrated |
-| PostgreSQL | `HvacErpDbContext.cs`, dispatch entity configurations and migration | Initial persisted dispatch schedules and assignments, not comprehensive ERP persistence |
-| Dispatch query | `DispatchScheduleQueries.cs` | Read only schedule retrieval from the configured database |
-| Testing | `tests/` | Automated test source exists for domain, permission resolver and API smoke scenarios; tests were not executed as part of this review |
-| Packaging | `Dockerfile`, `compose.database.yml` | Container build specification and local PostgreSQL definition; deployment unverified |
-| Architecture docs | `docs/architecture/domain-model.md` | Product direction and intended tenant boundaries documented, including entities not yet persisted or exposed by API |
+The backend has separate domain, application, infrastructure and API projects using C# and .NET 10.
 
-## Not verified or not found in snapshot
+The API currently includes these endpoints:
 
-* Web frontend and user facing workflows.
-* Authentication and Cognito integration in the live API.
-* Tenant identity derived from verified authentication context.
-* Server side authorization and tenant scoping on current endpoints.
-* API endpoints for creating or updating customers, work orders, or assignments.
-* EF persistence for most domain entities.
-* Protected Access challenge execution and full audit event persistence.
-* Production cloud infrastructure, CI pipelines, monitoring and backup restore testing.
-* HYVAC user acceptance testing, operational migration, or production cutover.
+`GET /` returns basic application information and version.
 
-## Important risks and immediate fixes
+`GET /health` includes a PostgreSQL health check.
 
-1. Current `/api/dispatch/schedules` endpoint has no visible authentication or tenant filter in `Program.cs` or its query. **Do not expose it with real business data until authorization and isolation are enforced.**
-2. `/api/system/database` exposes connection status. Determine whether operational diagnostic endpoints should be internal or authenticated in deployed environments.
-3. The EF Core context currently defines dispatch schedule and schedule technician sets only. Business entities in the domain model are not equivalent to deployed persistent modules.
-4. Planning documents previously disagreed on backend choice. The current implementation is .NET 10 and should be considered the baseline unless explicitly changed.
-5. Local Compose credentials are development placeholders, never production credentials.
-6. Verify actual build, test, migration, container build, and database behavior in a configured development environment before calling any module complete.
+`GET /api/system/database` checks database connectivity.
 
-## Near term definition of progress
+`GET /api/dispatch/schedules` retrieves dispatch schedules and assigned technicians.
 
-A credible first vertical slice is an authenticated user from a configured company who can create a customer, create a work order, schedule and assign it, view it from a web interface, and update its status with documented authorization and audit evidence. All tenant boundary tests must pass.
+Dispatch is the first area with an EF Core persistence configuration, an initial migration and a read endpoint. The schedule query includes scheduling times, arrival windows, time zones, status, notes and technician assignments.
+
+Domain models are present for companies, branches, users, memberships, roles, permissions, customers, locations, equipment, documents, work orders, checklists, signatures and dispatch scheduling. There is also permission resolution logic in the application layer.
+
+Docker configuration, a local PostgreSQL Compose environment and automated test projects are included. The test code covers parts of the domain, application logic and API. Tests and deployment were not executed as part of this review.
+
+## Still needed
+
+There is no user facing frontend or working login flow in this snapshot.
+
+The existing permission resolver is not yet enforced across the API. Company membership checks, tenant isolation and Protected Access challenges still need implementation and testing.
+
+Customer and work order domain models exist, but complete persistence and API operations for creating, updating and retrieving these records are not established. The dispatch endpoint is currently read only.
+
+Inventory, purchasing, finance, reporting, production hosting, monitoring, tested backups and migration are also outstanding.
+
+## Security notes
+
+The dispatch schedule endpoint has no visible authentication or company filtering in the reviewed code. It should not expose real business records until those checks are implemented.
+
+The database connectivity endpoint also needs its intended production access reviewed.
+
+Having a domain model does not mean the feature is fully available. Database operations, authorization, API behavior, interface and tests need to be verified separately.
+
+## Next
+
+Complete authentication and company isolation, then connect customer, work order and scheduling operations into one usable workflow.
+
+Run the full test suite, verify database migrations and complete the workflow through a user interface before treating it as ready for an internal pilot.
