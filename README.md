@@ -1,6 +1,6 @@
 # NullSupport ERP
 
-Modular ERP platform being developed by NullSupport LLC, with HYVAC Technologies serving as the initial implementation and intended pilot.
+Modular ERP platform being developed by NullSupport LLC.
 
 The goal is to consolidate operations into one system, including companies and branches, employees, permissions, customers, locations, equipment, work orders and dispatch scheduling. Purchasing, inventory, quotes, invoicing, reporting and integrations will be added as development progresses.
 
