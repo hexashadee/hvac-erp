@@ -55,10 +55,10 @@ Requires .NET 10 SDK and Docker with Compose for local PostgreSQL. <br>
 ```powershell 
 # From the repository root 
 docker compose -f compose.database.yml up -d
-dotnet restore HvacERP.slnx
-dotnet test HvacERP.slnx
-$env:HVAC_ERP_CONNECTION_STRING = 'Host=localhost;Port=5432;Database=hvac_erp;Username=hvac_erp;Password=hvac_erp_dev_password'
-dotnet run --project src/HvacERP.Api
+dotnet restore NullSupportERP.slnx
+dotnet test NullSupportERP.slnx
+$env:NULLSUPPORT_ERP_CONNECTION_STRING = 'Host=localhost;Port=5432;Database=nullsupport_erp;Username=nullsupport_erp;Password=nullsupport_erp_dev_password'
+dotnet run --project src/NullSupportERP.Api
 ```
 
 The Compose password is for **local development only**. Never reuse it in a public environment. <br>

@@ -3,27 +3,27 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 WORKDIR /src
 
-COPY HvacERP.slnx ./
+COPY NullSupportERP.slnx ./
 
-COPY src/HvacERP.Domain/HvacERP.Domain.csproj \
-    src/HvacERP.Domain/
+COPY src/NullSupportERP.Domain/NullSupportERP.Domain.csproj \
+    src/NullSupportERP.Domain/
 
-COPY src/HvacERP.Application/HvacERP.Application.csproj \
-    src/HvacERP.Application/
+COPY src/NullSupportERP.Application/NullSupportERP.Application.csproj \
+    src/NullSupportERP.Application/
 
-COPY src/HvacERP.Infrastructure/HvacERP.Infrastructure.csproj \
-    src/HvacERP.Infrastructure/
+COPY src/NullSupportERP.Infrastructure/NullSupportERP.Infrastructure.csproj \
+    src/NullSupportERP.Infrastructure/
 
-COPY src/HvacERP.Api/HvacERP.Api.csproj \
-    src/HvacERP.Api/
+COPY src/NullSupportERP.Api/NullSupportERP.Api.csproj \
+    src/NullSupportERP.Api/
 
 RUN dotnet restore \
-    src/HvacERP.Api/HvacERP.Api.csproj
+    src/NullSupportERP.Api/NullSupportERP.Api.csproj
 
 COPY src/ src/
 
 RUN dotnet publish \
-    src/HvacERP.Api/HvacERP.Api.csproj \
+    src/NullSupportERP.Api/NullSupportERP.Api.csproj \
     --configuration Release \
     --output /app/publish \
     --no-restore \
@@ -43,4 +43,4 @@ COPY --from=build /app/publish .
 
 USER $APP_UID
 
-ENTRYPOINT ["dotnet", "HvacERP.Api.dll"]
+ENTRYPOINT ["dotnet", "NullSupportERP.Api.dll"]

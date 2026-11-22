@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/NullSupportERP.Api/NullSupportERP.Api.csproj" />
+    <Project Path="src/NullSupportERP.Application/NullSupportERP.Application.csproj" />
+    <Project Path="src/NullSupportERP.Domain/NullSupportERP.Domain.csproj" />
+    <Project Path="src/NullSupportERP.Infrastructure/NullSupportERP.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NullSupportERP.Api.Tests/NullSupportERP.Api.Tests.csproj" />
+    <Project Path="tests/NullSupportERP.Application.Tests/NullSupportERP.Application.Tests.csproj" />
+    <Project Path="tests/NullSupportERP.Domain.Tests/NullSupportERP.Domain.Tests.csproj" />
+    <Project Path="tests/NullSupportERP.Infrastructure.Tests/NullSupportERP.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>
