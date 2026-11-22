@@ -1,47 +1,43 @@
-# Current implementation status
+# Development status
 
-This is based on the source code snapshot reviewed November 22, 2026. It describes what is present in the repository, not a completed build or deployed environment.
+NullSupport ERP is in backend development. This page tracks what the current foundation supports and what each part will be connected to next. It is not a release announcement.
 
-## Repository today
+## Backend and database
 
-The backend has separate domain, application, infrastructure and API projects using C# and .NET 10.
+The solution is built around C# and .NET 10, with separate Domain, Application, Infrastructure and API projects. PostgreSQL is configured through EF Core and Npgsql. Docker and a local PostgreSQL Compose environment are included.
 
-The API currently includes these endpoints:
+The API has basic application and database health endpoints, plus a dispatch schedule read endpoint. Dispatch schedules and technician assignments have EF Core configuration and an initial migration.
 
-`GET /` returns basic application information and version.
+The next step here is to extend the data layer for customers, locations, equipment and work orders. Those records will be connected through authenticated API operations, including creation, changes, status transitions and history.
 
-`GET /health` includes a PostgreSQL health check.
+## Company access
 
-`GET /api/system/database` checks database connectivity.
+Company, branch, membership, role and permission models are part of the domain. Permission resolution logic is in the application layer.
 
-`GET /api/dispatch/schedules` retrieves dispatch schedules and assigned technicians.
+Authentication will connect signed in users to their company memberships. The API will then verify the company boundary, role permissions and any individual restrictions before allowing access to a resource or action.
 
-Dispatch is the first area with an EF Core persistence configuration, an initial migration and a read endpoint. The schedule query includes scheduling times, arrival windows, time zones, status, notes and technician assignments.
+Company administrators will manage users and available workflows through their own controls. Protected Access will provide a separate authentication challenge for selected sensitive operations, with an expiry and audit record. These checks will be covered by isolation and permission tests.
 
-Domain models are present for companies, branches, users, memberships, roles, permissions, customers, locations, equipment, documents, work orders, checklists, signatures and dispatch scheduling. There is also permission resolution logic in the application layer.
+## Main ERP workflow
 
-Docker configuration, a local PostgreSQL Compose environment and automated test projects are included. The test code covers parts of the domain, application logic and API. Tests and deployment were not executed as part of this review.
+Customer, equipment, document, work order, checklist, signature and dispatch concepts are modeled in the backend. The next implementation pass connects them to persistent records, business operations and the frontend.
 
-## Still needed
+The first end to end test will cover creating a customer, opening a work order, assigning work, updating the schedule and closing the job. The record history should still be available afterward, with permissions enforced at every step.
 
-There is no user facing frontend or working login flow in this snapshot.
+The frontend will be built around those operations first. Admin controls, customer records, work orders and the dispatch view should share the same API and permission behavior.
 
-The existing permission resolver is not yet enforced across the API. Company membership checks, tenant isolation and Protected Access challenges still need implementation and testing.
+## Additional modules
 
-Customer and work order domain models exist, but complete persistence and API operations for creating, updating and retrieving these records are not established. The dispatch endpoint is currently read only.
+Inventory and purchasing will use stock transactions, vendor records, purchase orders and recorded movements. Quotes and invoices will connect to customers and work orders through controlled status changes. Reports will read company scoped records, with separate permissions for sensitive exports.
 
-Inventory, purchasing, finance, reporting, production hosting, monitoring, tested backups and migration are also outstanding.
+The industry requirements extend that design into lot and batch traceability, production schedules, quality checks, process specifications and certification records. The implementation approach is in the [industry requirements plan](INDUSTRY_REQUIREMENTS_PLAN.md), with the full responses in the [questionnaire](INDUSTRY_ERP_QUESTIONNAIRE.md).
 
-## Security notes
+## Testing and release
 
-The dispatch schedule endpoint has no visible authentication or company filtering in the reviewed code. It should not expose real business records until those checks are implemented.
+The repository includes .NET test projects covering portions of the domain, application and API. The next testing pass will exercise database migrations, authenticated operations, company isolation and the complete operational workflow.
 
-The database connectivity endpoint also needs its intended production access reviewed.
+Production preparation will cover encrypted connections and storage, audit logs, monitored backups, restore exercises, deployment checks, logging and a rollback procedure. Import and export workflows will include validation and reconciliation before any data is moved between systems.
 
-Having a domain model does not mean the feature is fully available. Database operations, authorization, API behavior, interface and tests need to be verified separately.
+No production date has been set. Development is being tracked against working workflows and verification, rather than an arbitrary percentage of completion.
 
-## Next
-
-Complete authentication and company isolation, then connect customer, work order and scheduling operations into one usable workflow.
-
-Run the full test suite, verify database migrations and complete the workflow through a user interface before treating it as ready for an internal pilot.
+See [features](FEATURES.md) for the module plan and [roadmap](ROADMAP.md) for implementation order.

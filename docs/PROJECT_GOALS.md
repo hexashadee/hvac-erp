@@ -1,26 +1,41 @@
 # Project goals
 
-NullSupport ERP is a modular operations platform being developed under NullSupport LLC. The goal is to bring customer records, equipment, work orders, dispatch and the surrounding business functions into one system.
+NullSupport ERP is a modular ERP platform being developed by NullSupport LLC.
 
-The platform is being structured for multiple companies, each with separate records, users, permissions and configurable workflows.
+The idea is to bring company operations into one system without forcing every business to work the same way. Companies and branches, employees, customer records, locations, equipment, work orders and scheduling are the starting point. Purchasing, inventory, quotes, invoices, reporting and integrations will follow.
 
-## Goals
+Each company will have its own records, administrators, permissions and workflows. The system should be configurable without needing a separate version of the application for every company.
 
-1. Complete a customer to work order to dispatch workflow, including scheduling, technician assignment, status changes and activity history.
-2. Give each company its own administration controls for employee accounts, roles, individual permissions and available modules or workflows.
-3. Enforce access through the API. Authentication, company membership and role permissions should all be checked before granting access to records or actions.
-4. Support Protected Access for sensitive areas, with additional authentication where required.
-5. Keep operational history and audit logs, with backups and recovery tested before production use.
-6. Keep the platform modular so inventory, purchasing, quotes, invoicing, reporting and integrations can be added as development progresses.
+## Company administration
 
-## Initial scope
+A designated administrator should be able to manage employees, assign roles, change individual permissions and choose which modules and workflows the company uses.
 
-The first usable workflow needs customer and location records, work order creation, dispatch scheduling, technician assignment and the ability to retrieve and update the records.
+Permissions will apply to the company, branch, department and individual function. The API will check those permissions whenever a user tries to view, create, modify or approve something. Hiding a button in the frontend is not a security control.
 
-Employee login, company and branch permissions, administrative controls and audit logging are part of that initial scope. A user interface is also required before the platform can be tested as an operational system.
+There will also be a Protected Access layer. An administrator can add an additional authentication requirement to a sensitive page, record or action. This is checked after normal permissions, not instead of them. Successful challenges expire, and the access attempts are logged.
 
-## Later scope
+## Operational workflow
 
-Inventory, purchasing, quotes, invoices, accounting integrations, reporting and automation will be developed around the core workflows.
+The first complete process will connect customers, locations, equipment, work orders and dispatch.
 
-The longer term goal is to support other businesses without maintaining separate versions of the application for each company. Commercial availability is a future direction, not a current release.
+1. Create a customer and location.
+2. Associate equipment and open a work order.
+3. Assign technicians, set a schedule and record changes.
+4. Update the work order through completion, keeping notes, documents and status history together.
+5. Retrieve the records with the appropriate company and employee permissions.
+
+The same records can then support quotes, purchasing, invoices and reporting without copying information into unrelated systems.
+
+## Data and security
+
+Company separation is part of the data model and API design. Every company-owned record will have a company boundary, and access checks will apply to queries, exports, attachments, automated jobs and integrations.
+
+Activity history will cover permission changes, Protected Access events and sensitive record changes. Backups, restore testing, monitoring and rollback procedures are part of the production requirements, not features to add later if something fails.
+
+## Expansion
+
+The platform will use separate modules with shared authorization and data rules. Inventory, purchasing, financial workflows and reporting can be added without restructuring the main customer and work order process.
+
+The [industry questionnaire](INDUSTRY_ERP_QUESTIONNAIRE.md) also covers manufacturing and quality requirements. Lot traceability, production routing, equipment calibration, certificates and similar processes can be implemented as specialized modules using the same company boundaries and permission system.
+
+The longer term direction is commercial use by multiple independent companies. The [roadmap](ROADMAP.md) covers development order, and [commercialization](COMMERCIALIZATION.md) covers what operating the platform for outside customers would involve.

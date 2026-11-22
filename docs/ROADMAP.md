@@ -1,52 +1,43 @@
 # Development roadmap
 
-Current priorities are based on the code that exists in the repository. <br>
+The order here is based on dependencies. There is not much value in building ten separate modules before the first customer record can move through a complete work order and dispatch process.
 
-## 1. Verify the current foundation <br>
+## 1. Finish the platform foundation
 
-Verify the existing migration and dispatch endpoint.
-<br>
-Confirm the current development and deployment setup + add more modules.
+Use the existing .NET solution and PostgreSQL setup as the base. Run the tests, apply the current migrations and verify the dispatch API with the local database. Then add consistent validation, error handling and repeatable setup for future modules.
 
-## 2. Authentication and company permissions <br>
+At the same time, connect authentication to company memberships. Roles and individual permissions will be checked by the API on every protected action. A user will only work within the company and branch access assigned to them.
 
-Implement login and company membership validation. Connect the existing permission logic to the API so access is enforced for actual records and actions. 
+Company admins will have controls for user accounts, permissions, modules and workflows. Protected Access will add a fresh authentication challenge where an admin marks a resource as sensitive. Challenge results will expire and be audited.
 
-Each company needs its own administrators with controls for users, roles, permissions and available workflows.
+**First checkpoint:** Sign in, administer company access, and prove through tests that another company's records and restricted actions cannot be accessed.
 
-Add tests to confirm company data cannot be accessed across tenants. Protected Access will provide additional authentication for selected sensitive areas.
-<br>
+## 2. Connect the core ERP operations
 
-## 3. Core operational workflow <br>
+Complete the persistence and API operations for customers, contacts, locations, equipment and work orders. Extend dispatch beyond schedule retrieval to creation, technician assignments, changes and status tracking.
 
+Build the frontend around the same process. The first useful flow is customer creation through work order completion, including notes, attachments and a readable history of changes.
 
-Connect customer records, locations, equipment, work orders and dispatch scheduling to PostgreSQL.
-<br>
+**Next checkpoint:** Complete a work order from start to finish in the interface, with saved records and permission checks throughout.
 
-Add the API operations needed to create, retrieve and update records, then build the frontend around those workflows.<br>
+## 3. Add business modules
 
+Inventory will track items, stock locations and transactions. Purchasing will use vendors and purchase orders. Quotes will have approval states and be able to feed work orders. Invoicing will use explicit financial states and retain correction history. Reports will pull from company scoped data and enforce export permissions.
 
-The first complete workflow should cover customer creation, work order creation, scheduling, technician assignment, status changes and activity history. <br>
- 
+Notifications and integrations will use background jobs, retry handling and logging. Imports will validate records before writing to the main database. Exports will allow a company to retrieve its own records in a documented format.
 
-## 4. Internal testing and deployment <br>
+## 4. Build out industry modules
 
+The [industry questionnaire](INDUSTRY_ERP_QUESTIONNAIRE.md) introduces quality management, production control and specialized equipment workflows.
 
-Test the workflow with representative operational data. Verify authentication, permissions, audit logs and company isolation. <br>
+Start with lot identifiers and movement history, production orders and routing, equipment capacity scheduling, quality inspections and specification revisions. Certificates, calibration records and more specialized process measurements will attach to those same records.
 
+The exact fields and process rules will be checked against real operating examples before implementation. See [industry requirements plan](INDUSTRY_REQUIREMENTS_PLAN.md).
 
-Set up production hosting, monitoring, backups and restore testing. Data imports and the rollback process need to be tested before any live migration.<br>
+## 5. Production and commercial preparation
 
+Set up production hosting, encryption, monitoring, audit storage, backups and tested restores. Test failure behavior, deployment rollback and access revocation. Then run acceptance testing against representative records and workflows.
 
-## 5. + modules <br>
+For multiple customer companies, add self contained onboarding, administrator setup, configuration, data import and export, subscription management and support procedures.
 
-Expand into purchasing, inventory, quotes, invoicing, reporting and integrations as the core system becomes usable.<br>
-
-
-Keep the modules configurable without maintaining separate application versions for each company.
-
-## 6. Commercial release
-
-The longer term goal is to allow additional companies to use NullSupport ERP independently, with separate records, administrative controls, configurable workflows and account onboarding.
-
-Subscription billing, support, security review and commercial terms are future requirements. They are not part of the current release.
+**Release checkpoint:** A release is ready when the workflows, security checks, backups and recovery procedures work in the intended environment. Dates will follow the actual verification results.
