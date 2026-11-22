@@ -6,7 +6,7 @@ The goal is to consolidate operations into one system, including companies and b
 
 The platform is being structured to support multiple companies independently, each with its own records, permissions and configurable workflows.
 
-Some functionality will follow established industry workflows, using existing systems as a reference. The implementation, design and code will be original or appropriately licensed.
+Some functionality will follow established industry workflows, using existing systems as a reference. The implementation, design and code will be original.
 
 Each company will have its own administrative controls. Designated administrators will be able to manage employee accounts, assign roles, adjust individual permissions and configure which modules and workflows are available. Access can be controlled at the company, branch, department and individual function level, including who can view, create, modify or approve certain records and actions.
 
@@ -16,7 +16,7 @@ These controls will be enforced through the API, not just the interface. Company
 
 The goal is to give each company control over its users, permissions and workflows without compromising security or requiring changes to the underlying application.
 
-## What is in this repository today
+## Repository today
 
 * A .NET 10 ASP.NET Core API with basic information, health, database connectivity, and read only dispatch schedule endpoints.
 * Domain model code for organizations, memberships, roles, customers, equipment, documents, work orders, checklists, signatures, and dispatch scheduling.
@@ -24,7 +24,7 @@ The goal is to give each company control over its users, permissions and workflo
 * EF Core PostgreSQL persistence configuration and an initial migration for dispatch schedules and assignments.
 * Docker configuration, local PostgreSQL Compose file, architecture notes, and automated tests.
 
-**Not established by this snapshot:** a user facing web application, a working login flow, API enforcement of tenant permissions, complete customer and work order persistence and CRUD endpoints, protected access challenges, inventory or finance modules, live production hosting, or completed HYVAC migration.
+**Not established by this snapshot:** a user facing web application, a working login flow, API enforcement of tenant permissions, complete customer and work order persistence and CRUD endpoints, protected access challenges, inventory or finance modules, live production hosting, or completed migration.
 
 ## Tech
 API: ASP.NET Core / C# / .NET 10
