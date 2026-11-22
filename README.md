@@ -64,7 +64,7 @@ dotnet run --project src/HvacERP.Api
 The Compose password is for **local development only**. Never reuse it in a public environment. 
 
 ## Release policy
-No production launch date has been committed. A HYVAC pilot needs verified core business workflows, secured endpoints, data isolation tests, operational backups, observability, user acceptance testing, and a controlled migration and rollback plan. See the [roadmap](docs/ROADMAP.md) for gates, not promises.
+No production launch date has been committed. See the [roadmap](docs/ROADMAP.md) for gates.
 
 ## Ownership
 
